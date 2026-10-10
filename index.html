@@ -7,6 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -174,6 +176,9 @@
       </button>
       <button id="tabReceivables" onclick="switchTab('receivables')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
         <i class="fas fa-hand-holding-dollar mr-1.5 text-xs"></i> Alacaklarım
+      </button>
+      <button id="tabAdmin" onclick="switchTab('admin')" class="hidden px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <i class="fas fa-user-shield mr-1.5 text-xs"></i> Admin
       </button>
     </div>
 
@@ -455,6 +460,21 @@
         </button>
       </div>
     </div>
+
+    <!-- ===== ADMIN PANELİ ===== -->
+    <div id="viewAdmin" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Admin Paneli</h2>
+          <p class="text-sm text-slate-500">Tüm kullanıcıların verileri (Firebase gerekir)</p>
+        </div>
+        <button onclick="loadAdminData()" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg">
+          <i class="fas fa-sync-alt"></i> Yenile
+        </button>
+      </div>
+      <div id="adminStatus" class="text-sm text-slate-500">Firebase bağlantısı bekleniyor...</div>
+      <div id="adminUsersList" class="space-y-4"></div>
+    </div>
   </main>
 
   <!-- Modal: Alacak Ekle / Düzenle -->
@@ -658,7 +678,24 @@
     let categoryChart = null;
 
     // ========== STORAGE ==========
-    function load() {
+    async function load() {
+      // Önce Firebase'den dene
+      if (window.fbDb && currentUsername) {
+        try {
+          const snap = await window.fbDb.ref('users/' + currentUsername + '/data').once('value');
+          const remote = snap.val();
+          if (remote && (remote.transactions || remote.receivables)) {
+            state.transactions = remote.transactions || [];
+            state.categories = remote.categories || [...DEFAULT_CATEGORIES];
+            state.receivables = remote.receivables || [];
+            localStorage.setItem('finansTakip', JSON.stringify(state));
+            return;
+          }
+        } catch (e) {
+          console.warn('Firebase load hatası, local kullanılıyor', e);
+        }
+      }
+      // Yoksa localStorage
       try {
         const raw = localStorage.getItem('finansTakip');
         if (raw) {
@@ -674,6 +711,15 @@
 
     function save() {
       localStorage.setItem('finansTakip', JSON.stringify(state));
+      // Firebase senkron (varsa)
+      if (window.fbDb && currentUsername) {
+        window.fbDb.ref('users/' + currentUsername + '/data').set({
+          transactions: state.transactions,
+          categories: state.categories,
+          receivables: state.receivables,
+          updatedAt: new Date().toISOString()
+        }).catch(e => console.warn('FB save error', e));
+      }
     }
 
     // ========== HELPERS ==========
@@ -1127,16 +1173,20 @@
       const overview = document.getElementById('viewOverview');
       const expenses = document.getElementById('viewExpenses');
       const receivables = document.getElementById('viewReceivables');
+      const admin = document.getElementById('viewAdmin');
       const btnO = document.getElementById('tabOverview');
       const btnE = document.getElementById('tabExpenses');
       const btnR = document.getElementById('tabReceivables');
+      const btnA = document.getElementById('tabAdmin');
 
       overview.classList.add('hidden');
       expenses.classList.add('hidden');
       receivables.classList.add('hidden');
+      if (admin) admin.classList.add('hidden');
       btnO.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
       btnE.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
       btnR.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
+      if (btnA) btnA.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
 
       if (tab === 'overview') {
         overview.classList.remove('hidden');
@@ -1151,6 +1201,10 @@
         btnR.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white transition';
         renderReceivables();
         if (!ratesUpdatedAt) refreshRates();
+      } else if (tab === 'admin' && admin) {
+        admin.classList.remove('hidden');
+        if (btnA) btnA.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition';
+        loadAdminData();
       }
     }
 
@@ -1452,6 +1506,96 @@
       }).join('');
     }
 
+    // ========== FIREBASE + ADMIN ==========
+    let currentUsername = null;
+    let isAdminUser = false;
+    window.fbDb = null;
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBar2Bt128GboFXJSqeluRJGAD4NGUf8g8",
+      authDomain: "avci-f2c46.firebaseapp.com",
+      databaseURL: "https://avci-f2c46-default-rtdb.firebaseio.com",
+      projectId: "avci-f2c46",
+      storageBucket: "avci-f2c46.firebasestorage.app",
+      messagingSenderId: "152793478991",
+      appId: "1:152793478991:web:7bbca5a1204766e349773a",
+      measurementId: "G-L3WN6N8YS4"
+    };
+
+    function initFirebase() {
+      try {
+        if (firebaseConfig.apiKey === "SENIN_API_KEY") {
+          console.log("Firebase config henüz girilmedi");
+          return;
+        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        window.fbDb = firebase.database();
+        console.log("Firebase bağlı");
+      } catch (e) {
+        console.warn("Firebase init hatası", e);
+      }
+    }
+    initFirebase();
+
+    function checkAdminAndShowTab() {
+      const auth = getAuth();
+      currentUsername = auth ? auth.username : null;
+      isAdminUser = currentUsername && (currentUsername.toLowerCase() === 'admin' || currentUsername.toLowerCase() === 'avci' || currentUsername.toLowerCase() === 'murat');
+      const tab = document.getElementById('tabAdmin');
+      if (tab) {
+        if (isAdminUser) tab.classList.remove('hidden');
+        else tab.classList.add('hidden');
+      }
+    }
+
+    async function loadAdminData() {
+      const status = document.getElementById('adminStatus');
+      const list = document.getElementById('adminUsersList');
+      if (!window.fbDb) {
+        if (status) status.textContent = "Firebase ayarlanmamış. Aşağıdaki adımları takip et.";
+        if (list) list.innerHTML = '<div class="p-4 bg-amber-50 rounded-xl text-sm text-amber-800">Admin paneli için Firebase kurulumu gerekli. Talimatlar sohbette verildi.</div>';
+        return;
+      }
+      if (status) status.textContent = "Kullanıcılar yükleniyor...";
+      try {
+        const snap = await window.fbDb.ref('users').once('value');
+        const users = snap.val() || {};
+        const entries = Object.entries(users);
+        if (entries.length === 0) {
+          if (status) status.textContent = "Henüz kayıtlı kullanıcı yok.";
+          if (list) list.innerHTML = '';
+          return;
+        }
+        if (status) status.textContent = entries.length + " kullanıcı bulundu";
+        list.innerHTML = entries.map(([username, userData]) => {
+          const data = userData.data || {};
+          const txs = data.transactions || [];
+          const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0);
+          const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0);
+          const balance = income - expense;
+          const recvCount = (data.receivables || []).length;
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <div class="flex items-center justify-between mb-3">
+                <div class="font-semibold text-slate-900">${username}</div>
+                <span class="text-xs text-slate-400">${data.updatedAt ? new Date(data.updatedAt).toLocaleString('tr-TR') : ''}</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                <div><div class="text-slate-500">Bakiye</div><div class="font-semibold ${balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatMoney(balance)}</div></div>
+                <div><div class="text-slate-500">Gelir</div><div class="font-semibold text-emerald-600">${formatMoney(income)}</div></div>
+                <div><div class="text-slate-500">Gider</div><div class="font-semibold text-rose-600">${formatMoney(expense)}</div></div>
+                <div><div class="text-slate-500">Alacak</div><div class="font-semibold">${recvCount}</div></div>
+              </div>
+              <div class="mt-3 text-xs text-slate-500">${txs.length} işlem</div>
+            </div>`;
+        }).join('');
+      } catch (e) {
+        if (status) status.textContent = "Hata: " + e.message;
+        console.error(e);
+      }
+    }
+
     // ========== INIT ==========
     function refreshAll() {
       fillCategorySelect();
@@ -1514,12 +1658,17 @@
       return /^[0-9]+$/.test(str);
     }
 
-    function showApp() {
+    async function showApp() {
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('appRoot').classList.remove('hidden');
-      load();
+      const auth = getAuth();
+      currentUsername = auth ? auth.username : null;
+      checkAdminAndShowTab();
+      await load();
       document.getElementById('filterMonth').value = '';
       refreshAll();
+      // Veriyi Firebase'e gönder
+      if (window.fbDb && currentUsername) save();
     }
 
     function showAuthScreen() {
