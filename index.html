@@ -179,6 +179,9 @@
       <button id="menuAdmin" onclick="switchTab('admin'); toggleSideMenu();" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
         <i class="fas fa-user-shield w-5 text-center text-indigo-500"></i> Admin
       </button>
+      <button onclick="switchTab('ai'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
+        <i class="fas fa-robot w-5 text-center text-violet-500"></i> Yapay Zeka
+      </button>
 
       <p class="text-xs font-medium text-slate-400 uppercase tracking-wider px-3 pt-4 pb-1">Araçlar</p>
       <button onclick="openModal('category'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
@@ -500,6 +503,34 @@
       <div id="adminStatus" class="text-sm text-slate-500">Yükleniyor...</div>
       <div id="adminUsersList" class="space-y-4"></div>
     </div>
+
+    <!-- ===== YAPAY ZEKA SOHBET ===== -->
+    <div id="viewAI" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col" style="height: 70vh;">
+        <div class="px-5 py-4 border-b border-slate-100">
+          <h2 class="text-lg font-semibold text-slate-900">Yapay Zeka</h2>
+          <p class="text-sm text-slate-500">Harcamanı yaz, otomatik kaydedeyim</p>
+        </div>
+        <div id="aiMessages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+          <div class="flex justify-start">
+            <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-xs text-sm text-slate-700">
+              Merhaba! Örnekler:<br>
+              • <strong>“Bugün 3 paket sigara aldım”</strong> → Harcama<br>
+              • <strong>“Erkan abiye 500 TL borç verdim”</strong> → Alacak<br>
+              • <strong>“Dün 250 TL market”</strong> → Harcama
+            </div>
+          </div>
+        </div>
+        <div class="p-4 border-t border-slate-100">
+          <form onsubmit="sendAIMessage(event)" class="flex gap-2">
+            <input type="text" id="aiInput" placeholder="Harcamanı yaz..." class="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+            <button type="submit" class="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Modal: Alacak Ekle / Düzenle -->
@@ -774,6 +805,126 @@
       }`;
       el.classList.remove('hidden');
       setTimeout(() => el.classList.add('hidden'), 2800);
+    }
+
+    // ========== YAPAY ZEKA ==========
+    function addAIMessage(text, isUser = false) {
+      const container = document.getElementById('aiMessages');
+      if (!container) return;
+      const div = document.createElement('div');
+      div.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+      div.innerHTML = `
+        <div class="${isUser ? 'bg-violet-600 text-white' : 'bg-white border border-slate-200 text-slate-700'} rounded-2xl ${isUser ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-4 py-2.5 max-w-xs text-sm">
+          ${text}
+        </div>`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function parseAICommand(text) {
+      const t = text.toLowerCase().trim();
+      let date = new Date().toISOString().slice(0, 10);
+      if (t.includes('dün')) {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        date = d.toISOString().slice(0, 10);
+      }
+
+      // Alacak / borç verme tespiti
+      const isReceivable = /borç ver|alacak|vereceğim|verdiğim|emanet/.test(t);
+      const isIncome = /gelir|maaş|aldım para|kazandım/.test(t) && !isReceivable;
+
+      // Miktar
+      let amount = 0;
+      const numMatch = t.match(/(\d+[.,]?\d*)\s*(tl|lira|₺|gram|dolar|euro)?/);
+      if (numMatch) amount = parseFloat(numMatch[1].replace(',', '.'));
+
+      // Kişi adı (alacak için)
+      let person = '';
+      const personMatch = t.match(/([a-zçğıöşü]+\s*(abi|abla|amca|dayı|teyze|kardeş)?)\s*(ye|ya|e)?\s*\d/i);
+      if (personMatch) person = personMatch[1].trim();
+      if (!person) {
+        const simple = t.match(/([A-ZÇĞİÖŞÜ][a-zçğıöşü]+)\s+(abi|abla)?/);
+        if (simple) person = simple[0].trim();
+      }
+      if (!person) person = 'Belirtilmedi';
+
+      // Kategori (harcama için)
+      let category = 'Diğer';
+      const catMap = [
+        [/sigara|tütün/, 'Sigara'],
+        [/market|migros|bim|a101|şok|carrefour/, 'Market'],
+        [/benzin|yakıt|shell|opet|bp/, 'Ulaşım'],
+        [/kahve|çay|restoran|yemek|burger/, 'Yeme & İçme'],
+        [/netflix|spotify|abonelik/, 'Abonelik'],
+        [/kira/, 'Kira'],
+        [/fatura|elektrik|su|doğalgaz/, 'Faturalar']
+      ];
+      for (const [re, cat] of catMap) {
+        if (re.test(t)) { category = cat; break; }
+      }
+
+      let description = text.replace(/bugün|dün|aldım|aldık|harcadım|borç verdim|vereceğim/gi, '').trim();
+      if (!description) description = isReceivable ? 'Alacak' : 'Harcama';
+
+      if (amount === 0) {
+        const pack = t.match(/(\d+)\s*(paket|adet|tane|gram)/);
+        if (pack) amount = parseInt(pack[1]);
+        else amount = 1;
+      }
+
+      return {
+        intent: isReceivable ? 'receivable' : (isIncome ? 'income' : 'expense'),
+        amount,
+        category,
+        description,
+        person,
+        date,
+        type: isIncome ? 'income' : 'expense'
+      };
+    }
+
+    function sendAIMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('aiInput');
+      const text = input.value.trim();
+      if (!text) return;
+      addAIMessage(text, true);
+      input.value = '';
+
+      const parsed = parseAICommand(text);
+      if (parsed.amount <= 0) {
+        addAIMessage('Tutarı anlayamadım. Örnek: “Erkan abiye 500 TL borç verdim” veya “Bugün 3 paket sigara”');
+        return;
+      }
+
+      if (parsed.intent === 'receivable') {
+        state.receivables.push({
+          id: uid(),
+          asset: 'usd', // varsayılan TL karşılığı için
+          amount: parsed.amount,
+          type: 'Borç',
+          person: parsed.person,
+          date: parsed.date,
+          note: parsed.description
+        });
+        save();
+        refreshAll();
+        addAIMessage(`Alacak olarak kaydettim:<br><strong>${parsed.person}</strong> → ${formatMoney(parsed.amount)}<br>${formatDate(parsed.date)}`);
+      } else {
+        state.transactions.push({
+          id: uid(),
+          type: parsed.type,
+          amount: parsed.amount,
+          category: parsed.category,
+          description: parsed.description,
+          date: parsed.date
+        });
+        save();
+        refreshAll();
+        const typeText = parsed.type === 'income' ? 'Gelir' : 'Harcama';
+        addAIMessage(`${typeText} kaydettim:<br><strong>${parsed.description}</strong><br>${formatMoney(parsed.amount)} • ${parsed.category} • ${formatDate(parsed.date)}`);
+      }
     }
 
     // ========== MODALS ==========
@@ -1199,11 +1350,13 @@
       const expenses = document.getElementById('viewExpenses');
       const receivables = document.getElementById('viewReceivables');
       const admin = document.getElementById('viewAdmin');
+      const ai = document.getElementById('viewAI');
 
       overview.classList.add('hidden');
       expenses.classList.add('hidden');
       receivables.classList.add('hidden');
       if (admin) admin.classList.add('hidden');
+      if (ai) ai.classList.add('hidden');
 
       if (tab === 'overview') {
         overview.classList.remove('hidden');
@@ -1218,6 +1371,9 @@
       } else if (tab === 'admin' && admin) {
         admin.classList.remove('hidden');
         loadAdminData();
+      } else if (tab === 'ai' && ai) {
+        ai.classList.remove('hidden');
+        setTimeout(() => document.getElementById('aiInput')?.focus(), 100);
       }
     }
 
