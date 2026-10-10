@@ -832,7 +832,8 @@
 
       // Alacak / borç verme tespiti
       const isReceivable = /borç ver|alacak|vereceğim|verdiğim|emanet/.test(t);
-      const isIncome = /gelir|maaş|aldım para|kazandım/.test(t) && !isReceivable;
+      const isPaidForSomeone = /fatura.*öde|ödedim|borcunu öde|yerine öde|adına öde/.test(t);
+      const isIncome = /gelir|maaş|aldım para|kazandım/.test(t) && !isReceivable && !isPaidForSomeone;
 
       // Miktar
       let amount = 0;
@@ -841,7 +842,7 @@
 
       // Kişi adı (alacak için)
       let person = '';
-      const personMatch = t.match(/([a-zçğıöşü]+\s*(abi|abla|amca|dayı|teyze|kardeş)?)\s*(ye|ya|e)?\s*\d/i);
+      const personMatch = t.match(/([a-zçğıöşü]+\s*(abi|abla|amca|dayı|teyze|kardeş)?)\s*(nin|nın|nün|nün|ye|ya|e)?/i);
       if (personMatch) person = personMatch[1].trim();
       if (!person) {
         const simple = t.match(/([A-ZÇĞİÖŞÜ][a-zçğıöşü]+)\s+(abi|abla)?/);
@@ -874,7 +875,7 @@
       }
 
       return {
-        intent: isReceivable ? 'receivable' : (isIncome ? 'income' : 'expense'),
+        intent: isPaidForSomeone ? 'both' : (isReceivable ? 'receivable' : (isIncome ? 'income' : 'expense')),
         amount,
         category,
         description,
@@ -898,7 +899,31 @@
         return;
       }
 
-      if (parsed.intent === 'receivable') {
+      if (parsed.intent === 'both') {
+        // Hem harcama hem alacak
+        state.transactions.push({
+          id: uid(),
+          type: 'expense',
+          amount: parsed.amount,
+          category: parsed.category,
+          description: parsed.description + ' (' + parsed.person + ' adına)',
+          date: parsed.date
+        });
+        state.receivables.push({
+          id: uid(),
+          asset: 'usd',
+          amount: parsed.amount,
+          type: 'Borç',
+          person: parsed.person,
+          date: parsed.date,
+          note: 'Fatura / ödeme: ' + parsed.description
+        });
+        save();
+        refreshAll();
+        addAIMessage(`Hem harcama hem alacak olarak kaydettim:<br>
+          <strong>Harcama:</strong> ${formatMoney(parsed.amount)} (${parsed.category})<br>
+          <strong>Alacak:</strong> ${parsed.person} → ${formatMoney(parsed.amount)}`);
+      } else if (parsed.intent === 'receivable') {
         state.receivables.push({
           id: uid(),
           asset: 'usd', // varsayılan TL karşılığı için
