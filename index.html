@@ -1338,16 +1338,42 @@
       if (btn) btn.disabled = true;
       if (info) info.textContent = 'Kurlar güncelleniyor...';
       try {
-        const res = await fetch('https://cdn.jsdelivr.net/gh/MehmetAkgul/currency-api-tr@main/v1/currencies/try-full.json?t=' + Date.now());
-        const data = await res.json();
-        const t = data.try || {};
+        // Altın: daha sık güncellenen kaynak
+        const goldRes = await fetch('https://turkpidya.com/wp-json/turkpidya-data/v1/gold?t=' + Date.now());
+        const goldData = await goldRes.json();
+        const goldPrices = goldData.prices || [];
+
+        // Döviz: mevcut kaynak (TCMB günlük)
+        const fxRes = await fetch('https://cdn.jsdelivr.net/gh/MehmetAkgul/currency-api-tr@main/v1/currencies/try-full.json?t=' + Date.now());
+        const fxData = await fxRes.json();
+        const fx = fxData.try || {};
+
         ratesCache = {};
-        const keys = ['usd','eur','gbp','chf','xau_gram','xau_ceyrek','xau_yarim','xau_tam','xau_cumhuriyet','xag_gram'];
-        keys.forEach(k => {
-          if (t[k] && typeof t[k].ask === 'number') ratesCache[k] = t[k].ask;
-          else if (t[k] && typeof t[k].bid === 'number') ratesCache[k] = t[k].bid;
+
+        // Döviz
+        ['usd','eur','gbp','chf'].forEach(k => {
+          if (fx[k] && typeof fx[k].ask === 'number') ratesCache[k] = fx[k].ask;
+          else if (fx[k] && typeof fx[k].bid === 'number') ratesCache[k] = fx[k].bid;
         });
-        ratesUpdatedAt = data.updated_at || new Date().toISOString();
+
+        // Altın / gümüş (Turkpidya)
+        const goldMap = {
+          gram_24k: 'xau_gram',
+          ceyrek: 'xau_ceyrek',
+          yarim: 'xau_yarim',
+          tam: 'xau_tam',
+          cumhuriyet: 'xau_cumhuriyet',
+          gumus: 'xag_gram'
+        };
+        goldPrices.forEach(p => {
+          const key = goldMap[p.symbol] || goldMap[p.name];
+          if (key) {
+            const price = p.sell || p.ask || p.buy || p.bid;
+            if (typeof price === 'number') ratesCache[key] = price;
+          }
+        });
+
+        ratesUpdatedAt = goldData.last_updated || fxData.updated_at || new Date().toISOString();
         if (info) {
           const d = new Date(ratesUpdatedAt);
           info.textContent = 'Kurlar: ' + d.toLocaleString('tr-TR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
@@ -1357,6 +1383,7 @@
       } catch (e) {
         if (info) info.textContent = 'Kurlar alınamadı — interneti kontrol et';
         showToast('Kur güncellenemedi', 'error');
+        console.error(e);
       }
       if (btn) btn.disabled = false;
     }
