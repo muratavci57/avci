@@ -1199,36 +1199,24 @@
       const expenses = document.getElementById('viewExpenses');
       const receivables = document.getElementById('viewReceivables');
       const admin = document.getElementById('viewAdmin');
-      const btnO = document.getElementById('tabOverview');
-      const btnE = document.getElementById('tabExpenses');
-      const btnR = document.getElementById('tabReceivables');
-      const btnA = document.getElementById('tabAdmin');
 
       overview.classList.add('hidden');
       expenses.classList.add('hidden');
       receivables.classList.add('hidden');
       if (admin) admin.classList.add('hidden');
-      btnO.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
-      btnE.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
-      btnR.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
-      if (btnA) btnA.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
 
       if (tab === 'overview') {
         overview.classList.remove('hidden');
-        btnO.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white transition';
         updateCharts();
       } else if (tab === 'expenses') {
         expenses.classList.remove('hidden');
-        btnE.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-rose-600 text-white transition';
         renderExpensesView();
       } else if (tab === 'receivables') {
         receivables.classList.remove('hidden');
-        btnR.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white transition';
         renderReceivables();
-        refreshRates(); // Her girişte kurları güncelle
+        refreshRates();
       } else if (tab === 'admin' && admin) {
         admin.classList.remove('hidden');
-        if (btnA) btnA.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition';
         loadAdminData();
       }
     }
