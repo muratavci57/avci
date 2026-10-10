@@ -1581,11 +1581,10 @@
     function checkAdminAndShowTab() {
       const auth = getAuth();
       currentUsername = auth ? auth.username : null;
-      isAdminUser = currentUsername && (currentUsername.toLowerCase() === 'admin' || currentUsername.toLowerCase() === 'avci' || currentUsername.toLowerCase() === 'murat');
+      isAdminUser = true; // Herkes Admin menüsünü görebilsin
       const menuItem = document.getElementById('menuAdmin');
       if (menuItem) {
-        if (isAdminUser) menuItem.classList.remove('hidden');
-        else menuItem.classList.add('hidden');
+        menuItem.classList.remove('hidden');
       }
     }
 
