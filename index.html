@@ -1849,7 +1849,7 @@
       showToast('Hesap oluşturuldu');
     }
 
-    function handleLogin(e) {
+    async function handleLogin(e) {
       if (e && e.preventDefault) e.preventDefault();
       const username = document.getElementById('loginUsername').value.trim();
       const pin = document.getElementById('loginPin').value;
