@@ -1574,7 +1574,7 @@
     }
 
     function handleLogin(e) {
-      e.preventDefault();
+      if (e && e.preventDefault) e.preventDefault();
       const username = document.getElementById('loginUsername').value.trim();
       const pin = document.getElementById('loginPin').value;
       const err = document.getElementById('loginError');
@@ -1583,22 +1583,40 @@
       if (!auth) {
         err.textContent = 'Hesap bulunamadı';
         err.classList.remove('hidden');
-        return;
+        return false;
       }
       if (!isDigitsOnly(pin)) {
         err.textContent = 'Şifre sadece rakamlardan oluşmalı';
         err.classList.remove('hidden');
-        return;
+        return false;
       }
       if (username !== auth.username || hashPin(pin) !== auth.pinHash) {
-        err.textContent = 'Kullanıcı adı veya şifre hatalı';
-        err.classList.remove('hidden');
-        document.getElementById('loginPin').value = '';
-        return;
+        // Otomatik denemede hata gösterme; sadece butonla basınca göster
+        if (e && e.type === 'submit') {
+          err.textContent = 'Kullanıcı adı veya şifre hatalı';
+          err.classList.remove('hidden');
+          document.getElementById('loginPin').value = '';
+        }
+        return false;
       }
       err.classList.add('hidden');
       sessionStorage.setItem('finansTakipSession', '1');
       showApp();
+      return true;
+    }
+
+    function tryAutoLogin() {
+      const auth = getAuth();
+      if (!auth) return;
+      const username = document.getElementById('loginUsername').value.trim();
+      const pin = document.getElementById('loginPin').value;
+      // Kayıtlı şifre uzunluğuna ulaşınca dene (4–8 hane)
+      if (!username || !pin || pin.length < 4) return;
+      if (username === auth.username && hashPin(pin) === auth.pinHash) {
+        document.getElementById('loginError').classList.add('hidden');
+        sessionStorage.setItem('finansTakipSession', '1');
+        showApp();
+      }
     }
 
     function logout() {
@@ -1608,15 +1626,17 @@
       showToast('Çıkış yapıldı', 'info');
     }
 
-    // Sadece rakam girilsin
+    // Sadece rakam + şifre doğruysa otomatik giriş
     ['setupPin', 'setupPin2', 'loginPin'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener('input', () => {
           el.value = el.value.replace(/\D/g, '');
+          if (id === 'loginPin') tryAutoLogin();
         });
       }
     });
+    document.getElementById('loginUsername')?.addEventListener('input', tryAutoLogin);
 
     // Oturum kontrolü: aynı sekmede açık kalsın, kapatınca tekrar sorsun
     if (sessionStorage.getItem('finansTakipSession') === '1' && getAuth()) {
