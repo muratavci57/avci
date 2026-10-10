@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,43 +12,46 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    body { font-family: 'Inter', system-ui, sans-serif; }
-    .card { transition: transform 0.2s, box-shadow 0.2s; }
-    .card:hover { transform: translateY(-2px); }
-    .transaction-row:hover { background-color: #f8fafc; }
-    .dark .transaction-row:hover { background-color: #1e293b; }
-    .modal-backdrop { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); }
-    .dark .modal-backdrop { background: rgba(0, 0, 0, 0.7); }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0b1220; color: #e2e8f0; }
+    .card { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.35); }
+    .modal-backdrop { background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); }
     .chart-container { position: relative; height: 280px; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    .dark ::-webkit-scrollbar-track { background: #1e293b; }
-    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
-    .fade-in { animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    html.dark body { background-color: #0f172a; color: #e2e8f0; }
-    html.dark .bg-white { background-color: #1e293b !important; }
-    html.dark .bg-slate-50 { background-color: #0f172a !important; }
-    html.dark .bg-slate-100 { background-color: #334155 !important; }
-    html.dark .border-slate-100, html.dark .border-slate-200 { border-color: #334155 !important; }
-    html.dark .text-slate-900 { color: #f1f5f9 !important; }
-    html.dark .text-slate-800 { color: #e2e8f0 !important; }
-    html.dark .text-slate-700 { color: #cbd5e1 !important; }
-    html.dark .text-slate-600 { color: #94a3b8 !important; }
-    html.dark .text-slate-500 { color: #94a3b8 !important; }
-    html.dark .text-slate-400 { color: #64748b !important; }
-    html.dark input, html.dark select, html.dark textarea {
-      background-color: #0f172a !important; color: #e2e8f0 !important; border-color: #475569 !important;
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    .fade-in { animation: fadeIn 0.35s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-in { animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+    button, a, .rounded-lg, .rounded-xl { transition: all 0.2s ease; }
+    button:active { transform: scale(0.97); }
+    nav { transition: box-shadow 0.3s; }
+    aside { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* Koyu tema */
+    html, body { background: #0b1220 !important; color: #e2e8f0; }
+    .bg-white, .bg-slate-50 { background-color: #111827 !important; }
+    .bg-slate-100 { background-color: #1f2937 !important; }
+    .border-slate-100, .border-slate-200 { border-color: #1f2937 !important; }
+    .text-slate-900 { color: #f8fafc !important; }
+    .text-slate-800 { color: #e2e8f0 !important; }
+    .text-slate-700 { color: #cbd5e1 !important; }
+    .text-slate-600, .text-slate-500 { color: #94a3b8 !important; }
+    .text-slate-400 { color: #64748b !important; }
+    input, select, textarea {
+      background-color: #0f172a !important;
+      color: #e2e8f0 !important;
+      border-color: #334155 !important;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #334155 !important; }
-    html.dark thead.bg-slate-50 { background-color: #1e293b !important; }
-    html.dark .hover\:bg-slate-50:hover { background-color: #334155 !important; }
-    html.dark .hover\:bg-slate-100:hover { background-color: #334155 !important; }
-    html.dark .bg-emerald-50 { background-color: rgba(16,185,129,0.15) !important; }
-    html.dark .bg-rose-50 { background-color: rgba(244,63,94,0.15) !important; }
-    html.dark .bg-amber-50 { background-color: rgba(245,158,11,0.15) !important; }
-    html.dark .bg-indigo-50 { background-color: rgba(99,102,241,0.15) !important; }
-    html.dark .bg-violet-50 { background-color: rgba(139,92,246,0.15) !important; }
+    input:focus, select:focus, textarea:focus {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+    }
+    nav { background: #0f172a !important; border-color: #1f2937 !important; }
+    aside { background: #0f172a !important; }
+    .shadow-sm, .shadow-xl { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
@@ -122,7 +125,7 @@
   <div id="appRoot" class="hidden">
 
   <!-- Navbar -->
-  <nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+  <nav class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center gap-3">
@@ -178,9 +181,6 @@
       </button>
       <button id="menuAdmin" onclick="switchTab('admin'); toggleSideMenu();" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
         <i class="fas fa-user-shield w-5 text-center text-indigo-500"></i> Admin
-      </button>
-      <button onclick="switchTab('ai'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
-        <i class="fas fa-robot w-5 text-center text-violet-500"></i> Yapay Zeka
       </button>
 
       <p class="text-xs font-medium text-slate-400 uppercase tracking-wider px-3 pt-4 pb-1">Araçlar</p>
@@ -503,34 +503,6 @@
       <div id="adminStatus" class="text-sm text-slate-500">Yükleniyor...</div>
       <div id="adminUsersList" class="space-y-4"></div>
     </div>
-
-    <!-- ===== YAPAY ZEKA SOHBET ===== -->
-    <div id="viewAI" class="hidden space-y-4">
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col" style="height: 70vh;">
-        <div class="px-5 py-4 border-b border-slate-100">
-          <h2 class="text-lg font-semibold text-slate-900">Yapay Zeka</h2>
-          <p class="text-sm text-slate-500">Harcamanı yaz, otomatik kaydedeyim</p>
-        </div>
-        <div id="aiMessages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
-          <div class="flex justify-start">
-            <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-xs text-sm text-slate-700">
-              Merhaba! Örnekler:<br>
-              • <strong>“Bugün 3 paket sigara aldım”</strong> → Harcama<br>
-              • <strong>“Erkan abiye 500 TL borç verdim”</strong> → Alacak<br>
-              • <strong>“Dün 250 TL market”</strong> → Harcama
-            </div>
-          </div>
-        </div>
-        <div class="p-4 border-t border-slate-100">
-          <form onsubmit="sendAIMessage(event)" class="flex gap-2">
-            <input type="text" id="aiInput" placeholder="Harcamanı yaz..." class="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-            <button type="submit" class="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium">
-              <i class="fas fa-paper-plane"></i>
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
   </main>
 
   <!-- Modal: Alacak Ekle / Düzenle -->
@@ -805,151 +777,6 @@
       }`;
       el.classList.remove('hidden');
       setTimeout(() => el.classList.add('hidden'), 2800);
-    }
-
-    // ========== YAPAY ZEKA ==========
-    function addAIMessage(text, isUser = false) {
-      const container = document.getElementById('aiMessages');
-      if (!container) return;
-      const div = document.createElement('div');
-      div.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
-      div.innerHTML = `
-        <div class="${isUser ? 'bg-violet-600 text-white' : 'bg-white border border-slate-200 text-slate-700'} rounded-2xl ${isUser ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-4 py-2.5 max-w-xs text-sm">
-          ${text}
-        </div>`;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function parseAICommand(text) {
-      const t = text.toLowerCase().trim();
-      let date = new Date().toISOString().slice(0, 10);
-      if (t.includes('dün')) {
-        const d = new Date();
-        d.setDate(d.getDate() - 1);
-        date = d.toISOString().slice(0, 10);
-      }
-
-      // Alacak / borç verme tespiti
-      const isReceivable = /borç ver|alacak|vereceğim|verdiğim|emanet/.test(t);
-      const isPaidForSomeone = /fatura.*öde|ödedim|borcunu öde|yerine öde|adına öde/.test(t);
-      const isIncome = /gelir|maaş|aldım para|kazandım/.test(t) && !isReceivable && !isPaidForSomeone;
-
-      // Miktar
-      let amount = 0;
-      const numMatch = t.match(/(\d+[.,]?\d*)\s*(tl|lira|₺|gram|dolar|euro)?/);
-      if (numMatch) amount = parseFloat(numMatch[1].replace(',', '.'));
-
-      // Kişi adı (alacak için)
-      let person = '';
-      const personMatch = t.match(/([a-zçğıöşü]+\s*(abi|abla|amca|dayı|teyze|kardeş)?)\s*(nin|nın|nün|nün|ye|ya|e)?/i);
-      if (personMatch) person = personMatch[1].trim();
-      if (!person) {
-        const simple = t.match(/([A-ZÇĞİÖŞÜ][a-zçğıöşü]+)\s+(abi|abla)?/);
-        if (simple) person = simple[0].trim();
-      }
-      if (!person) person = 'Belirtilmedi';
-
-      // Kategori (harcama için)
-      let category = 'Diğer';
-      const catMap = [
-        [/sigara|tütün/, 'Sigara'],
-        [/market|migros|bim|a101|şok|carrefour/, 'Market'],
-        [/benzin|yakıt|shell|opet|bp/, 'Ulaşım'],
-        [/kahve|çay|restoran|yemek|burger/, 'Yeme & İçme'],
-        [/netflix|spotify|abonelik/, 'Abonelik'],
-        [/kira/, 'Kira'],
-        [/fatura|elektrik|su|doğalgaz/, 'Faturalar']
-      ];
-      for (const [re, cat] of catMap) {
-        if (re.test(t)) { category = cat; break; }
-      }
-
-      let description = text.replace(/bugün|dün|aldım|aldık|harcadım|borç verdim|vereceğim/gi, '').trim();
-      if (!description) description = isReceivable ? 'Alacak' : 'Harcama';
-
-      if (amount === 0) {
-        const pack = t.match(/(\d+)\s*(paket|adet|tane|gram)/);
-        if (pack) amount = parseInt(pack[1]);
-        else amount = 1;
-      }
-
-      return {
-        intent: isPaidForSomeone ? 'both' : (isReceivable ? 'receivable' : (isIncome ? 'income' : 'expense')),
-        amount,
-        category,
-        description,
-        person,
-        date,
-        type: isIncome ? 'income' : 'expense'
-      };
-    }
-
-    function sendAIMessage(e) {
-      e.preventDefault();
-      const input = document.getElementById('aiInput');
-      const text = input.value.trim();
-      if (!text) return;
-      addAIMessage(text, true);
-      input.value = '';
-
-      const parsed = parseAICommand(text);
-      if (parsed.amount <= 0) {
-        addAIMessage('Tutarı anlayamadım. Örnek: “Erkan abiye 500 TL borç verdim” veya “Bugün 3 paket sigara”');
-        return;
-      }
-
-      if (parsed.intent === 'both') {
-        // Hem harcama hem alacak
-        state.transactions.push({
-          id: uid(),
-          type: 'expense',
-          amount: parsed.amount,
-          category: parsed.category,
-          description: parsed.description + ' (' + parsed.person + ' adına)',
-          date: parsed.date
-        });
-        state.receivables.push({
-          id: uid(),
-          asset: 'usd',
-          amount: parsed.amount,
-          type: 'Borç',
-          person: parsed.person,
-          date: parsed.date,
-          note: 'Fatura / ödeme: ' + parsed.description
-        });
-        save();
-        refreshAll();
-        addAIMessage(`Hem harcama hem alacak olarak kaydettim:<br>
-          <strong>Harcama:</strong> ${formatMoney(parsed.amount)} (${parsed.category})<br>
-          <strong>Alacak:</strong> ${parsed.person} → ${formatMoney(parsed.amount)}`);
-      } else if (parsed.intent === 'receivable') {
-        state.receivables.push({
-          id: uid(),
-          asset: 'usd', // varsayılan TL karşılığı için
-          amount: parsed.amount,
-          type: 'Borç',
-          person: parsed.person,
-          date: parsed.date,
-          note: parsed.description
-        });
-        save();
-        refreshAll();
-        addAIMessage(`Alacak olarak kaydettim:<br><strong>${parsed.person}</strong> → ${formatMoney(parsed.amount)}<br>${formatDate(parsed.date)}`);
-      } else {
-        state.transactions.push({
-          id: uid(),
-          type: parsed.type,
-          amount: parsed.amount,
-          category: parsed.category,
-          description: parsed.description,
-          date: parsed.date
-        });
-        save();
-        refreshAll();
-        const typeText = parsed.type === 'income' ? 'Gelir' : 'Harcama';
-        addAIMessage(`${typeText} kaydettim:<br><strong>${parsed.description}</strong><br>${formatMoney(parsed.amount)} • ${parsed.category} • ${formatDate(parsed.date)}`);
-      }
     }
 
     // ========== MODALS ==========
@@ -1375,13 +1202,11 @@
       const expenses = document.getElementById('viewExpenses');
       const receivables = document.getElementById('viewReceivables');
       const admin = document.getElementById('viewAdmin');
-      const ai = document.getElementById('viewAI');
 
       overview.classList.add('hidden');
       expenses.classList.add('hidden');
       receivables.classList.add('hidden');
       if (admin) admin.classList.add('hidden');
-      if (ai) ai.classList.add('hidden');
 
       if (tab === 'overview') {
         overview.classList.remove('hidden');
@@ -1396,9 +1221,6 @@
       } else if (tab === 'admin' && admin) {
         admin.classList.remove('hidden');
         loadAdminData();
-      } else if (tab === 'ai' && ai) {
-        ai.classList.remove('hidden');
-        setTimeout(() => document.getElementById('aiInput')?.focus(), 100);
       }
     }
 
