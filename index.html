@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AVCI | Muhasebe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .card { transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-2px); }
+    .transaction-row:hover { background-color: #f8fafc; }
+    .dark .transaction-row:hover { background-color: #1e293b; }
+    .modal-backdrop { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); }
+    .dark .modal-backdrop { background: rgba(0, 0, 0, 0.7); }
+    .chart-container { position: relative; height: 280px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    .dark ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    html.dark body { background-color: #0f172a; color: #e2e8f0; }
+    html.dark .bg-white { background-color: #1e293b !important; }
+    html.dark .bg-slate-50 { background-color: #0f172a !important; }
+    html.dark .bg-slate-100 { background-color: #334155 !important; }
+    html.dark .border-slate-100, html.dark .border-slate-200 { border-color: #334155 !important; }
+    html.dark .text-slate-900 { color: #f1f5f9 !important; }
+    html.dark .text-slate-800 { color: #e2e8f0 !important; }
+    html.dark .text-slate-700 { color: #cbd5e1 !important; }
+    html.dark .text-slate-600 { color: #94a3b8 !important; }
+    html.dark .text-slate-500 { color: #94a3b8 !important; }
+    html.dark .text-slate-400 { color: #64748b !important; }
+    html.dark input, html.dark select, html.dark textarea {
+      background-color: #0f172a !important; color: #e2e8f0 !important; border-color: #475569 !important;
+    }
+    html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #334155 !important; }
+    html.dark thead.bg-slate-50 { background-color: #1e293b !important; }
+    html.dark .hover\:bg-slate-50:hover { background-color: #334155 !important; }
+    html.dark .hover\:bg-slate-100:hover { background-color: #334155 !important; }
+    html.dark .bg-emerald-50 { background-color: rgba(16,185,129,0.15) !important; }
+    html.dark .bg-rose-50 { background-color: rgba(244,63,94,0.15) !important; }
+    html.dark .bg-amber-50 { background-color: rgba(245,158,11,0.15) !important; }
+    html.dark .bg-indigo-50 { background-color: rgba(99,102,241,0.15) !important; }
+    html.dark .bg-violet-50 { background-color: rgba(139,92,246,0.15) !important; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <!-- ========== GİRİŞ / KURULUM EKRANI ========== -->
+  <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 p-4">
+    <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 fade-in">
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg mb-3">
+          <i class="fas fa-wallet text-xl"></i>
+        </div>
+        <h1 class="text-xl font-bold text-slate-900">AVCI</h1>
+        <p class="text-xs text-slate-500">Muhasebe</p>
+        <p id="authSubtitle" class="text-sm text-slate-500 mt-2">Giriş yap</p>
+      </div>
+
+      <!-- Kurulum formu (ilk kez) -->
+      <form id="setupForm" class="hidden space-y-4" onsubmit="handleSetup(event)">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kullanıcı adı</label>
+          <input type="text" id="setupUsername" required autocomplete="username" placeholder="Örn: ahmet"
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Şifre (sadece rakam)</label>
+          <input type="password" id="setupPin" required inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" placeholder="4-8 haneli rakam"
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 tracking-widest" />
+          <p class="text-xs text-slate-400 mt-1">Sadece rakam, 4–8 hane</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Şifre tekrar</label>
+          <input type="password" id="setupPin2" required inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" placeholder="Tekrar girin"
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 tracking-widest" />
+        </div>
+        <p id="setupError" class="hidden text-sm text-rose-600"></p>
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition">
+          Hesabı Oluştur
+        </button>
+      </form>
+
+      <!-- Giriş formu -->
+      <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kullanıcı adı</label>
+          <input type="text" id="loginUsername" required autocomplete="username" placeholder="Kullanıcı adın"
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Şifre (rakam)</label>
+          <input type="password" id="loginPin" required inputmode="numeric" pattern="[0-9]*" placeholder="••••"
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 tracking-widest" />
+        </div>
+        <p id="loginError" class="hidden text-sm text-rose-600"></p>
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition">
+          Giriş Yap
+        </button>
+      </form>
+
+      <!-- Yedekten yükle: kullanıcı adı + şifre de gelir -->
+      <div class="mt-5 pt-5 border-t border-slate-100">
+        <p class="text-xs text-slate-500 text-center mb-2">Önceki yedeğin varsa (kullanıcı adı + şifre dahil):</p>
+        <button type="button" onclick="document.getElementById('authImportFile').click()" class="w-full py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-xl transition flex items-center justify-center gap-2">
+          <i class="fas fa-upload"></i> Veri Yükle
+        </button>
+        <input type="file" id="authImportFile" accept=".json,application/json" class="hidden" onchange="importData(event, true)" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== UYGULAMA ========== -->
+  <div id="appRoot" class="hidden">
+
+  <!-- Navbar -->
+  <nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md">
+            <i class="fas fa-wallet text-sm"></i>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-slate-900 leading-tight">AVCI</h1>
+            <p class="text-xs text-slate-500">Muhasebe</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="toggleDarkMode()" id="darkModeBtn" title="Koyu / açık mod" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-moon" id="darkModeIcon"></i>
+          </button>
+          <button onclick="openModal('transaction')" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
+            <i class="fas fa-plus text-xs"></i>
+            <span class="hidden sm:inline">İşlem Ekle</span>
+          </button>
+          <button onclick="openModal('category')" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition">
+            <i class="fas fa-tags text-xs"></i>
+            <span class="hidden sm:inline">Kategoriler</span>
+          </button>
+          <button onclick="exportData()" title="Veriyi dışa aktar (yedekle)" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-download"></i>
+          </button>
+          <button onclick="document.getElementById('importFile').click()" title="Veriyi içe aktar (yedekten yükle)" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-upload"></i>
+          </button>
+          <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importData(event)" />
+          <button onclick="confirmClear()" title="Tüm veriyi sil" class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+          <button onclick="logout()" title="Çıkış yap" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Sekmeler -->
+    <div class="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm w-fit">
+      <button id="tabOverview" onclick="switchTab('overview')" class="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white transition">
+        <i class="fas fa-chart-pie mr-1.5 text-xs"></i> Genel Bakış
+      </button>
+      <button id="tabExpenses" onclick="switchTab('expenses')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <i class="fas fa-receipt mr-1.5 text-xs"></i> Harcamalarım
+      </button>
+      <button id="tabReceivables" onclick="switchTab('receivables')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <i class="fas fa-hand-holding-dollar mr-1.5 text-xs"></i> Alacaklarım
+      </button>
+    </div>
+
+    <!-- ===== GENEL BAKIŞ ===== -->
+    <div id="viewOverview" class="space-y-6">
+
+      <!-- Özet Kartlar -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Toplam Bakiye</p>
+              <p id="totalBalance" class="text-2xl font-bold text-slate-900 mt-1">₺0,00</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+              <i class="fas fa-scale-balanced"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Toplam Gelir</p>
+              <p id="totalIncome" class="text-2xl font-bold text-emerald-600 mt-1">₺0,00</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <i class="fas fa-arrow-trend-up"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Toplam Gider</p>
+              <p id="totalExpense" class="text-2xl font-bold text-rose-600 mt-1">₺0,00</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
+              <i class="fas fa-arrow-trend-down"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Bu Ay Net</p>
+              <p id="monthNet" class="text-2xl font-bold text-indigo-600 mt-1">₺0,00</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grafikler -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold text-slate-900">Aylık Gelir / Gider</h2>
+            <select id="chartMonths" onchange="updateCharts()" class="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="6">Son 6 ay</option>
+              <option value="12" selected>Son 12 ay</option>
+            </select>
+          </div>
+          <div class="chart-container">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <h2 class="text-base font-semibold text-slate-900 mb-4">Gider Dağılımı</h2>
+          <div class="chart-container">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- İşlem Listesi -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 class="text-base font-semibold text-slate-900">İşlemler</h2>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="filterType" onchange="renderTransactions()" class="text-sm border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="all">Tümü</option>
+              <option value="income">Gelir</option>
+              <option value="expense">Gider</option>
+            </select>
+            <select id="filterCategory" onchange="renderTransactions()" class="text-sm border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="all">Tüm Kategoriler</option>
+            </select>
+            <input type="month" id="filterMonth" onchange="renderTransactions()" class="text-sm border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input type="search" id="searchInput" oninput="renderTransactions()" placeholder="Ara..." class="text-sm border border-slate-200 rounded-lg px-3 py-1.5 w-36 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500 text-left">
+              <tr>
+                <th class="px-5 py-3 font-medium">Tarih</th>
+                <th class="px-5 py-3 font-medium">Açıklama</th>
+                <th class="px-5 py-3 font-medium">Kategori</th>
+                <th class="px-5 py-3 font-medium text-right">Tutar</th>
+                <th class="px-5 py-3 font-medium text-center w-24">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="transactionBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="hidden py-16 text-center">
+          <div class="w-16 h-16 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
+            <i class="fas fa-receipt text-2xl"></i>
+          </div>
+          <p class="text-slate-500 font-medium">Henüz işlem yok</p>
+          <p class="text-sm text-slate-400 mt-1">İlk gelir veya giderini ekleyerek başla</p>
+          <button onclick="openModal('transaction')" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg">
+            <i class="fas fa-plus text-xs"></i> İşlem Ekle
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== HARCAMALARIM ===== -->
+    <div id="viewExpenses" class="hidden space-y-6">
+
+      <!-- Harcama özet kartları -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Bu Ay Harcama</p>
+              <p id="expMonthTotal" class="text-2xl font-bold text-rose-600 mt-1">₺0,00</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
+              <i class="fas fa-calendar-day"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Günlük Ortalama</p>
+              <p id="expDailyAvg" class="text-2xl font-bold text-amber-600 mt-1">₺0,00</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+              <i class="fas fa-chart-line"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-slate-500">En Çok Harcanan</p>
+              <p id="expTopCategory" class="text-lg font-bold text-slate-900 mt-1 truncate max-w-[140px]">—</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
+              <i class="fas fa-fire"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Harcama Sayısı</p>
+              <p id="expCount" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+              <i class="fas fa-list-ol"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kategori bazlı harcamalar + son harcamalar -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Kategori breakdown -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold text-slate-900">Kategoriye Göre Harcamalar</h2>
+            <select id="expPeriod" onchange="renderExpensesView()" class="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500">
+              <option value="month" selected>Bu Ay</option>
+              <option value="all">Tüm Zamanlar</option>
+              <option value="3">Son 3 Ay</option>
+            </select>
+          </div>
+          <div id="expCategoryBars" class="space-y-3">
+            <!-- JS ile doldurulacak -->
+          </div>
+          <div id="expCategoryEmpty" class="hidden py-10 text-center text-slate-400 text-sm">
+            Henüz harcama yok
+          </div>
+        </div>
+
+        <!-- Son harcamalar -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <h2 class="text-base font-semibold text-slate-900 mb-4">Son Harcamalar</h2>
+          <div id="expRecentList" class="space-y-2 max-h-[360px] overflow-y-auto">
+            <!-- JS ile doldurulacak -->
+          </div>
+          <div id="expRecentEmpty" class="hidden py-10 text-center text-slate-400 text-sm">
+            Henüz harcama yok
+          </div>
+        </div>
+      </div>
+
+      <!-- Tüm harcamalar tablosu -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 class="text-base font-semibold text-slate-900">Tüm Harcamalar</h2>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="expFilterCategory" onchange="renderExpensesView()" class="text-sm border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500">
+              <option value="all">Tüm Kategoriler</option>
+            </select>
+            <input type="search" id="expSearch" oninput="renderExpensesView()" placeholder="Ara..." class="text-sm border border-slate-200 rounded-lg px-3 py-1.5 w-36 focus:outline-none focus:ring-2 focus:ring-rose-500" />
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500 text-left">
+              <tr>
+                <th class="px-5 py-3 font-medium">Tarih</th>
+                <th class="px-5 py-3 font-medium">Açıklama</th>
+                <th class="px-5 py-3 font-medium">Kategori</th>
+                <th class="px-5 py-3 font-medium text-right">Tutar</th>
+                <th class="px-5 py-3 font-medium text-center w-24">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="expTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+        <div id="expTableEmpty" class="hidden py-12 text-center text-slate-400 text-sm">
+          Harcama bulunamadı
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ALACAKLARIM ===== -->
+    <div id="viewReceivables" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Alacaklarım</h2>
+          <p class="text-sm text-slate-500">Döviz / altın cinsinden alacaklar · tıkla → TL karşılığı</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="refreshRates()" id="btnRefreshRates" class="inline-flex items-center gap-2 px-3 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition">
+            <i class="fas fa-sync-alt text-xs"></i> Kurları Güncelle
+          </button>
+          <button onclick="openModal('receivable')" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
+            <i class="fas fa-plus text-xs"></i> Alacak Ekle
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <p class="text-sm font-medium text-slate-500">Toplam Alacak (TL)</p>
+          <p id="recvTotalTL" class="text-2xl font-bold text-amber-600 mt-1">₺0,00</p>
+          <p id="recvRatesInfo" class="text-xs text-slate-400 mt-1">Kurlar yükleniyor...</p>
+        </div>
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <p class="text-sm font-medium text-slate-500">Alacak Adedi</p>
+          <p id="recvCount" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        </div>
+        <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <p class="text-sm font-medium text-slate-500">Yaklaşan (7 gün)</p>
+          <p id="recvUpcoming" class="text-2xl font-bold text-indigo-600 mt-1">0</p>
+        </div>
+      </div>
+
+      <div id="recvList" class="space-y-3">
+        <!-- JS ile doldurulacak -->
+      </div>
+      <div id="recvEmpty" class="hidden py-16 text-center bg-white rounded-2xl border border-slate-200">
+        <div class="w-16 h-16 mx-auto rounded-full bg-amber-50 flex items-center justify-center text-amber-500 mb-4">
+          <i class="fas fa-hand-holding-dollar text-2xl"></i>
+        </div>
+        <p class="text-slate-500 font-medium">Henüz alacak yok</p>
+        <p class="text-sm text-slate-400 mt-1">Örn: 1 gram altın, 100 USD…</p>
+        <button onclick="openModal('receivable')" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg">
+          <i class="fas fa-plus text-xs"></i> Alacak Ekle
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: Alacak Ekle / Düzenle -->
+  <div id="modalReceivable" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md fade-in">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <h3 id="recvModalTitle" class="text-lg font-semibold text-slate-900">Yeni Alacak</h3>
+        <button onclick="closeModal('receivable')" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form id="receivableForm" onsubmit="saveReceivable(event)" class="p-5 space-y-4">
+        <input type="hidden" id="recvEditId" />
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Varlık türü</label>
+          <select id="recvAsset" required class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <option value="xau_gram">Gram Altın</option>
+            <option value="xau_ceyrek">Çeyrek Altın</option>
+            <option value="xau_yarim">Yarım Altın</option>
+            <option value="xau_tam">Tam Altın</option>
+            <option value="xau_cumhuriyet">Cumhuriyet Altını</option>
+            <option value="xag_gram">Gram Gümüş</option>
+            <option value="usd">ABD Doları (USD)</option>
+            <option value="eur">Euro (EUR)</option>
+            <option value="gbp">Sterlin (GBP)</option>
+            <option value="chf">İsviçre Frangı (CHF)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Miktar</label>
+          <input type="number" id="recvAmount" step="0.01" min="0.01" required placeholder="Örn: 1"
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+          <p class="text-xs text-slate-400 mt-1">Örn: 1 gram altın için <strong>1</strong> yaz</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Alacak türü</label>
+          <select id="recvType" required class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <option value="Borç">Borç</option>
+            <option value="Satış">Satış</option>
+            <option value="Maaş / Ücret">Maaş / Ücret</option>
+            <option value="Kira">Kira</option>
+            <option value="Emanet">Emanet</option>
+            <option value="Diğer">Diğer</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kimden (Ad Soyad)</label>
+          <input type="text" id="recvPerson" required placeholder="Örn: Ahmet Yılmaz"
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Alacak tarihi</label>
+          <input type="date" id="recvDate" required
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Not (isteğe bağlı)</label>
+          <input type="text" id="recvNote" placeholder="Örn: borç senedi, sözlü anlaşma..."
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeModal('receivable')" class="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-xl hover:bg-slate-50 transition">İptal</button>
+          <button type="submit" class="flex-1 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-xl transition">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: İşlem Ekle / Düzenle -->
+  <div id="modalTransaction" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md fade-in">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <h3 id="modalTitle" class="text-lg font-semibold text-slate-900">Yeni İşlem</h3>
+        <button onclick="closeModal('transaction')" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form id="transactionForm" onsubmit="saveTransaction(event)" class="p-5 space-y-4">
+        <input type="hidden" id="editId" />
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Tür</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="relative cursor-pointer">
+              <input type="radio" name="type" value="income" class="peer sr-only" checked />
+              <div class="border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 rounded-xl py-2.5 text-center text-sm font-medium transition">
+                <i class="fas fa-arrow-up text-emerald-600 mr-1"></i> Gelir
+              </div>
+            </label>
+            <label class="relative cursor-pointer">
+              <input type="radio" name="type" value="expense" class="peer sr-only" />
+              <div class="border-2 border-slate-200 peer-checked:border-rose-500 peer-checked:bg-rose-50 rounded-xl py-2.5 text-center text-sm font-medium transition">
+                <i class="fas fa-arrow-down text-rose-600 mr-1"></i> Gider
+              </div>
+            </label>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Tutar (₺)</label>
+          <input type="number" id="amount" step="0.01" min="0.01" required placeholder="0,00"
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kategori</label>
+          <select id="category" required class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Açıklama</label>
+          <input type="text" id="description" placeholder="Örn: Maaş, Market alışverişi..."
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Tarih</label>
+          <input type="date" id="date" required
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeModal('transaction')" class="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-xl hover:bg-slate-50 transition">
+            İptal
+          </button>
+          <button type="submit" class="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition">
+            Kaydet
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Kategoriler -->
+  <div id="modalCategory" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md fade-in">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <h3 class="text-lg font-semibold text-slate-900">Kategoriler</h3>
+        <button onclick="closeModal('category')" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-5 space-y-4">
+        <form onsubmit="addCategory(event)" class="flex gap-2">
+          <input type="text" id="newCategory" placeholder="Yeni kategori adı" required
+            class="flex-1 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          <button type="submit" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl">
+            <i class="fas fa-plus"></i>
+          </button>
+        </form>
+        <ul id="categoryList" class="space-y-1.5 max-h-64 overflow-y-auto">
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 hidden px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white fade-in"></div>
+
+  </div><!-- /appRoot -->
+
+  <script>
+    // ========== STATE ==========
+    const DEFAULT_CATEGORIES = [
+      'Maaş', 'Freelance', 'Yatırım', 'Hediye',
+      'Market', 'Ulaşım', 'Kira', 'Faturalar', 'Yemek',
+      'Sağlık', 'Eğlence', 'Alışveriş', 'Eğitim', 'Diğer'
+    ];
+
+    const ASSET_LABELS = {
+      xau_gram: 'Gram Altın',
+      xau_ceyrek: 'Çeyrek Altın',
+      xau_yarim: 'Yarım Altın',
+      xau_tam: 'Tam Altın',
+      xau_cumhuriyet: 'Cumhuriyet Altını',
+      xag_gram: 'Gram Gümüş',
+      usd: 'USD',
+      eur: 'EUR',
+      gbp: 'GBP',
+      chf: 'CHF'
+    };
+
+    const ASSET_UNIT = {
+      xau_gram: 'gram altın',
+      xau_ceyrek: 'çeyrek altın',
+      xau_yarim: 'yarım altın',
+      xau_tam: 'tam altın',
+      xau_cumhuriyet: 'cumhuriyet altını',
+      xag_gram: 'gram gümüş',
+      usd: 'USD',
+      eur: 'EUR',
+      gbp: 'GBP',
+      chf: 'CHF'
+    };
+
+    let state = {
+      transactions: [],
+      categories: [...DEFAULT_CATEGORIES],
+      receivables: []
+    };
+
+    let ratesCache = {}; // asset key -> TRY price (ask)
+    let ratesUpdatedAt = null;
+
+    let trendChart = null;
+    let categoryChart = null;
+
+    // ========== STORAGE ==========
+    function load() {
+      try {
+        const raw = localStorage.getItem('finansTakip');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state.transactions = parsed.transactions || [];
+          state.categories = parsed.categories || [...DEFAULT_CATEGORIES];
+          state.receivables = parsed.receivables || [];
+        }
+      } catch (e) {
+        console.warn('Veri yüklenemedi', e);
+      }
+    }
+
+    function save() {
+      localStorage.setItem('finansTakip', JSON.stringify(state));
+    }
+
+    // ========== HELPERS ==========
+    function formatMoney(n) {
+      return new Intl.NumberFormat('tr-TR', {
+        style: 'currency',
+        currency: 'TRY',
+        minimumFractionDigits: 2
+      }).format(n);
+    }
+
+    function formatDate(d) {
+      return new Date(d + 'T00:00:00').toLocaleDateString('tr-TR', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      });
+    }
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = `fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white fade-in ${
+        type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-700'
+      }`;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 2800);
+    }
+
+    // ========== MODALS ==========
+    function openModal(type) {
+      if (type === 'transaction') {
+        document.getElementById('modalTitle').textContent = 'Yeni İşlem';
+        document.getElementById('editId').value = '';
+        document.getElementById('transactionForm').reset();
+        document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+        fillCategorySelect();
+        document.querySelector('input[name="type"][value="income"]').checked = true;
+      } else if (type === 'receivable') {
+        document.getElementById('recvModalTitle').textContent = 'Yeni Alacak';
+        document.getElementById('recvEditId').value = '';
+        document.getElementById('receivableForm').reset();
+        document.getElementById('recvDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('recvAsset').value = 'xau_gram';
+        document.getElementById('recvType').value = 'Borç';
+      }
+      const modalMap = { transaction: 'modalTransaction', category: 'modalCategory', receivable: 'modalReceivable' };
+      const modal = document.getElementById(modalMap[type] || 'modalTransaction');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (type === 'category') renderCategoryList();
+    }
+
+    function closeModal(type) {
+      const modalMap = { transaction: 'modalTransaction', category: 'modalCategory', receivable: 'modalReceivable' };
+      const modal = document.getElementById(modalMap[type] || 'modalTransaction');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // ========== CATEGORIES ==========
+    function fillCategorySelect() {
+      const sel = document.getElementById('category');
+      const filter = document.getElementById('filterCategory');
+      const expFilter = document.getElementById('expFilterCategory');
+      const current = sel.value;
+      sel.innerHTML = state.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      if (current && state.categories.includes(current)) sel.value = current;
+
+      const filterVal = filter.value;
+      const opts = '<option value="all">Tüm Kategoriler</option>' +
+        state.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      filter.innerHTML = opts;
+      if (filterVal) filter.value = filterVal;
+
+      if (expFilter) {
+        const expVal = expFilter.value;
+        expFilter.innerHTML = opts;
+        if (expVal) expFilter.value = expVal;
+      }
+    }
+
+    function renderCategoryList() {
+      const list = document.getElementById('categoryList');
+      list.innerHTML = state.categories.map(c => `
+        <li class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 group">
+          <span class="text-sm text-slate-700">${c}</span>
+          <button onclick="removeCategory('${c}')" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 transition" title="Sil">
+            <i class="fas fa-trash-alt text-xs"></i>
+          </button>
+        </li>
+      `).join('');
+    }
+
+    function addCategory(e) {
+      e.preventDefault();
+      const input = document.getElementById('newCategory');
+      const name = input.value.trim();
+      if (!name) return;
+      if (state.categories.includes(name)) {
+        showToast('Bu kategori zaten var', 'error');
+        return;
+      }
+      state.categories.push(name);
+      save();
+      fillCategorySelect();
+      renderCategoryList();
+      input.value = '';
+      showToast('Kategori eklendi');
+    }
+
+    function removeCategory(name) {
+      if (state.transactions.some(t => t.category === name)) {
+        showToast('Bu kategori kullanılıyor, önce işlemleri güncelle', 'error');
+        return;
+      }
+      state.categories = state.categories.filter(c => c !== name);
+      save();
+      fillCategorySelect();
+      renderCategoryList();
+      showToast('Kategori silindi');
+    }
+
+    // ========== TRANSACTIONS ==========
+    function saveTransaction(e) {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const type = document.querySelector('input[name="type"]:checked').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value;
+      const description = document.getElementById('description').value.trim();
+      const date = document.getElementById('date').value;
+
+      if (!amount || amount <= 0) {
+        showToast('Geçerli bir tutar girin', 'error');
+        return;
+      }
+
+      if (id) {
+        const idx = state.transactions.findIndex(t => t.id === id);
+        if (idx !== -1) {
+          state.transactions[idx] = { id, type, amount, category, description, date };
+        }
+        showToast('İşlem güncellendi');
+      } else {
+        state.transactions.push({ id: uid(), type, amount, category, description, date });
+        showToast('İşlem eklendi');
+      }
+
+      save();
+      closeModal('transaction');
+      refreshAll();
+    }
+
+    function editTransaction(id) {
+      const t = state.transactions.find(x => x.id === id);
+      if (!t) return;
+      document.getElementById('modalTitle').textContent = 'İşlemi Düzenle';
+      document.getElementById('editId').value = t.id;
+      document.querySelector(`input[name="type"][value="${t.type}"]`).checked = true;
+      document.getElementById('amount').value = t.amount;
+      fillCategorySelect();
+      document.getElementById('category').value = t.category;
+      document.getElementById('description').value = t.description || '';
+      document.getElementById('date').value = t.date;
+      const modal = document.getElementById('modalTransaction');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function deleteTransaction(id) {
+      if (!confirm('Bu işlemi silmek istediğine emin misin?')) return;
+      state.transactions = state.transactions.filter(t => t.id !== id);
+      save();
+      refreshAll();
+      showToast('İşlem silindi');
+    }
+
+    function getFiltered() {
+      const type = document.getElementById('filterType').value;
+      const cat = document.getElementById('filterCategory').value;
+      const month = document.getElementById('filterMonth').value;
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+
+      return state.transactions
+        .filter(t => {
+          if (type !== 'all' && t.type !== type) return false;
+          if (cat !== 'all' && t.category !== cat) return false;
+          if (month && !t.date.startsWith(month)) return false;
+          if (q && !(t.description || '').toLowerCase().includes(q) && !t.category.toLowerCase().includes(q)) return false;
+          return true;
+        })
+        .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+    }
+
+    function renderTransactions() {
+      const list = getFiltered();
+      const body = document.getElementById('transactionBody');
+      const empty = document.getElementById('emptyState');
+
+      if (list.length === 0) {
+        body.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      body.innerHTML = list.map(t => `
+        <tr class="transaction-row">
+          <td class="px-5 py-3.5 text-slate-600 whitespace-nowrap">${formatDate(t.date)}</td>
+          <td class="px-5 py-3.5">
+            <div class="font-medium text-slate-800">${t.description || '—'}</div>
+          </td>
+          <td class="px-5 py-3.5">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">${t.category}</span>
+          </td>
+          <td class="px-5 py-3.5 text-right font-semibold whitespace-nowrap ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}">
+            ${t.type === 'income' ? '+' : '−'}${formatMoney(t.amount)}
+          </td>
+          <td class="px-5 py-3.5 text-center">
+            <button onclick="editTransaction('${t.id}')" class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition" title="Düzenle">
+              <i class="fas fa-pen text-xs"></i>
+            </button>
+            <button onclick="deleteTransaction('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition" title="Sil">
+              <i class="fas fa-trash-alt text-xs"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ========== SUMMARY ==========
+    function updateSummary() {
+      const income = state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const expense = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const balance = income - expense;
+
+      const now = new Date();
+      const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const monthTx = state.transactions.filter(t => t.date.startsWith(thisMonth));
+      const mInc = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const mExp = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const monthNet = mInc - mExp;
+
+      document.getElementById('totalBalance').textContent = formatMoney(balance);
+      document.getElementById('totalBalance').className = `text-2xl font-bold mt-1 ${balance >= 0 ? 'text-slate-900' : 'text-rose-600'}`;
+      document.getElementById('totalIncome').textContent = formatMoney(income);
+      document.getElementById('totalExpense').textContent = formatMoney(expense);
+      document.getElementById('monthNet').textContent = formatMoney(monthNet);
+      document.getElementById('monthNet').className = `text-2xl font-bold mt-1 ${monthNet >= 0 ? 'text-indigo-600' : 'text-rose-600'}`;
+    }
+
+    // ========== CHARTS ==========
+    function updateCharts() {
+      const months = parseInt(document.getElementById('chartMonths').value) || 12;
+      const labels = [];
+      const incomeData = [];
+      const expenseData = [];
+
+      const now = new Date();
+      for (let i = months - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        labels.push(d.toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' }));
+        const monthTx = state.transactions.filter(t => t.date.startsWith(key));
+        incomeData.push(monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0));
+        expenseData.push(monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0));
+      }
+
+      if (trendChart) trendChart.destroy();
+      trendChart = new Chart(document.getElementById('trendChart'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Gelir',
+              data: incomeData,
+              backgroundColor: 'rgba(16, 185, 129, 0.8)',
+              borderRadius: 6,
+              borderSkipped: false
+            },
+            {
+              label: 'Gider',
+              data: expenseData,
+              backgroundColor: 'rgba(244, 63, 94, 0.8)',
+              borderRadius: 6,
+              borderSkipped: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: v => '₺' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v)
+              }
+            }
+          }
+        }
+      });
+
+      // Kategori pasta (sadece gider)
+      const expByCat = {};
+      state.transactions.filter(t => t.type === 'expense').forEach(t => {
+        expByCat[t.category] = (expByCat[t.category] || 0) + t.amount;
+      });
+      const catLabels = Object.keys(expByCat);
+      const catData = Object.values(expByCat);
+      const colors = [
+        '#10b981', '#f43f5e', '#6366f1', '#f59e0b', '#06b6d4',
+        '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b',
+        '#84cc16', '#e11d48', '#3b82f6', '#a855f7'
+      ];
+
+      if (categoryChart) categoryChart.destroy();
+      if (catLabels.length === 0) {
+        categoryChart = new Chart(document.getElementById('categoryChart'), {
+          type: 'doughnut',
+          data: { labels: ['Veri yok'], datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }] },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false }
+            }
+          }
+        });
+      } else {
+        categoryChart = new Chart(document.getElementById('categoryChart'), {
+          type: 'doughnut',
+          data: {
+            labels: catLabels,
+            datasets: [{
+              data: catData,
+              backgroundColor: colors.slice(0, catLabels.length),
+              borderWidth: 0,
+              hoverOffset: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '62%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { usePointStyle: true, boxWidth: 8, padding: 12, font: { size: 11 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: ctx => ` ${ctx.label}: ${formatMoney(ctx.raw)}`
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // ========== EXPORT / CLEAR ==========
+    function exportData() {
+      const payload = {
+        ...state,
+        auth: getAuth() || undefined,
+        darkMode: document.documentElement.classList.contains('dark')
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `avci-muhasebe-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Veri indirildi (şifre dahil)');
+    }
+
+    function importData(event, fromAuthScreen) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data || (!Array.isArray(data.transactions) && !data.auth)) {
+            showToast('Geçersiz dosya formatı', 'error');
+            return;
+          }
+          const count = Array.isArray(data.transactions) ? data.transactions.length : 0;
+          const recvCount = Array.isArray(data.receivables) ? data.receivables.length : 0;
+          if (!fromAuthScreen) {
+            if (!confirm(`${count} işlem ve ${recvCount} alacak yüklenecek. Mevcut verilerin üzerine yazılacak. Devam?`)) {
+              event.target.value = '';
+              return;
+            }
+          }
+          if (Array.isArray(data.transactions)) state.transactions = data.transactions;
+          if (Array.isArray(data.categories) && data.categories.length) state.categories = data.categories;
+          if (Array.isArray(data.receivables)) state.receivables = data.receivables;
+          save();
+
+          // Kullanıcı adı + şifreyi yedekten aktar
+          if (data.auth && data.auth.username && data.auth.pinHash) {
+            localStorage.setItem(AUTH_KEY, JSON.stringify({
+              username: data.auth.username,
+              pinHash: data.auth.pinHash
+            }));
+          }
+
+          if (data.darkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('avciDarkMode', '1');
+          }
+
+          if (fromAuthScreen && data.auth && data.auth.username) {
+            sessionStorage.setItem('finansTakipSession', '1');
+            showApp();
+            showToast('Veri ve hesap yüklendi — hoş geldin ' + data.auth.username);
+          } else {
+            refreshAll();
+            showToast(`${count} işlem, ${recvCount} alacak yüklendi`);
+          }
+        } catch (err) {
+          showToast('Dosya okunamadı', 'error');
+        }
+        event.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmClear() {
+      if (!confirm('Tüm işlemler, kategoriler ve alacaklar silinecek. Emin misin?')) return;
+      state = { transactions: [], categories: [...DEFAULT_CATEGORIES], receivables: [] };
+      save();
+      refreshAll();
+      showToast('Tüm veri temizlendi', 'info');
+    }
+
+    // ========== TABS ==========
+    function switchTab(tab) {
+      const overview = document.getElementById('viewOverview');
+      const expenses = document.getElementById('viewExpenses');
+      const receivables = document.getElementById('viewReceivables');
+      const btnO = document.getElementById('tabOverview');
+      const btnE = document.getElementById('tabExpenses');
+      const btnR = document.getElementById('tabReceivables');
+
+      overview.classList.add('hidden');
+      expenses.classList.add('hidden');
+      receivables.classList.add('hidden');
+      btnO.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
+      btnE.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
+      btnR.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
+
+      if (tab === 'overview') {
+        overview.classList.remove('hidden');
+        btnO.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white transition';
+        updateCharts();
+      } else if (tab === 'expenses') {
+        expenses.classList.remove('hidden');
+        btnE.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-rose-600 text-white transition';
+        renderExpensesView();
+      } else if (tab === 'receivables') {
+        receivables.classList.remove('hidden');
+        btnR.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white transition';
+        renderReceivables();
+        if (!ratesUpdatedAt) refreshRates();
+      }
+    }
+
+    // ========== HARCAMALARIM ==========
+    function getExpensePeriodTx() {
+      const period = document.getElementById('expPeriod')?.value || 'month';
+      const now = new Date();
+      let filtered = state.transactions.filter(t => t.type === 'expense');
+
+      if (period === 'month') {
+        const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        filtered = filtered.filter(t => t.date.startsWith(thisMonth));
+      } else if (period === '3') {
+        const cutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        const key = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-01`;
+        filtered = filtered.filter(t => t.date >= key);
+      }
+      return filtered;
+    }
+
+    function renderExpensesView() {
+      const now = new Date();
+      const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const monthExpenses = state.transactions.filter(t => t.type === 'expense' && t.date.startsWith(thisMonth));
+      const monthTotal = monthExpenses.reduce((s, t) => s + t.amount, 0);
+      const dayOfMonth = now.getDate();
+      const dailyAvg = dayOfMonth > 0 ? monthTotal / dayOfMonth : 0;
+
+      // Top category this month
+      const catMap = {};
+      monthExpenses.forEach(t => { catMap[t.category] = (catMap[t.category] || 0) + t.amount; });
+      const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0];
+
+      document.getElementById('expMonthTotal').textContent = formatMoney(monthTotal);
+      document.getElementById('expDailyAvg').textContent = formatMoney(dailyAvg);
+      document.getElementById('expTopCategory').textContent = topCat ? topCat[0] : '—';
+      document.getElementById('expTopCategory').title = topCat ? formatMoney(topCat[1]) : '';
+      document.getElementById('expCount').textContent = monthExpenses.length;
+
+      // Category bars (period based)
+      const periodTx = getExpensePeriodTx();
+      const barsMap = {};
+      periodTx.forEach(t => { barsMap[t.category] = (barsMap[t.category] || 0) + t.amount; });
+      const sorted = Object.entries(barsMap).sort((a, b) => b[1] - a[1]);
+      const maxVal = sorted.length ? sorted[0][1] : 1;
+      const colors = ['bg-rose-500','bg-orange-500','bg-amber-500','bg-violet-500','bg-indigo-500','bg-cyan-500','bg-teal-500','bg-pink-500','bg-fuchsia-500','bg-sky-500'];
+
+      const barsEl = document.getElementById('expCategoryBars');
+      const barsEmpty = document.getElementById('expCategoryEmpty');
+      if (sorted.length === 0) {
+        barsEl.innerHTML = '';
+        barsEmpty.classList.remove('hidden');
+      } else {
+        barsEmpty.classList.add('hidden');
+        barsEl.innerHTML = sorted.map(([cat, amount], i) => {
+          const pct = Math.round((amount / maxVal) * 100);
+          return `
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="font-medium text-slate-700">${cat}</span>
+                <span class="text-slate-500">${formatMoney(amount)}</span>
+              </div>
+              <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full ${colors[i % colors.length]} rounded-full transition-all duration-500" style="width:${pct}%"></div>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      // Recent expenses (last 10)
+      const allExp = state.transactions.filter(t => t.type === 'expense')
+        .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+      const recent = allExp.slice(0, 10);
+      const recentEl = document.getElementById('expRecentList');
+      const recentEmpty = document.getElementById('expRecentEmpty');
+      if (recent.length === 0) {
+        recentEl.innerHTML = '';
+        recentEmpty.classList.remove('hidden');
+      } else {
+        recentEmpty.classList.add('hidden');
+        recentEl.innerHTML = recent.map(t => `
+          <div class="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-50 group">
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium text-slate-800 truncate">${t.description || t.category}</div>
+              <div class="text-xs text-slate-400">${formatDate(t.date)} · ${t.category}</div>
+            </div>
+            <div class="flex items-center gap-2 ml-3">
+              <span class="text-sm font-semibold text-rose-600 whitespace-nowrap">−${formatMoney(t.amount)}</span>
+              <button onclick="editTransaction('${t.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-indigo-600" title="Düzenle"><i class="fas fa-pen text-xs"></i></button>
+              <button onclick="deleteTransaction('${t.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600" title="Sil"><i class="fas fa-trash-alt text-xs"></i></button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Full expenses table with filters
+      const catFilter = document.getElementById('expFilterCategory')?.value || 'all';
+      const q = (document.getElementById('expSearch')?.value || '').toLowerCase().trim();
+      let tableList = allExp.filter(t => {
+        if (catFilter !== 'all' && t.category !== catFilter) return false;
+        if (q && !(t.description || '').toLowerCase().includes(q) && !t.category.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      const tbody = document.getElementById('expTableBody');
+      const tableEmpty = document.getElementById('expTableEmpty');
+      if (tableList.length === 0) {
+        tbody.innerHTML = '';
+        tableEmpty.classList.remove('hidden');
+      } else {
+        tableEmpty.classList.add('hidden');
+        tbody.innerHTML = tableList.map(t => `
+          <tr class="transaction-row">
+            <td class="px-5 py-3.5 text-slate-600 whitespace-nowrap">${formatDate(t.date)}</td>
+            <td class="px-5 py-3.5 font-medium text-slate-800">${t.description || '—'}</td>
+            <td class="px-5 py-3.5"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700">${t.category}</span></td>
+            <td class="px-5 py-3.5 text-right font-semibold text-rose-600 whitespace-nowrap">−${formatMoney(t.amount)}</td>
+            <td class="px-5 py-3.5 text-center">
+              <button onclick="editTransaction('${t.id}')" class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition" title="Düzenle"><i class="fas fa-pen text-xs"></i></button>
+              <button onclick="deleteTransaction('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition" title="Sil"><i class="fas fa-trash-alt text-xs"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    // ========== ALACAKLARIM ==========
+    async function refreshRates() {
+      const info = document.getElementById('recvRatesInfo');
+      const btn = document.getElementById('btnRefreshRates');
+      if (btn) btn.disabled = true;
+      if (info) info.textContent = 'Kurlar güncelleniyor...';
+      try {
+        const res = await fetch('https://cdn.jsdelivr.net/gh/MehmetAkgul/currency-api-tr@main/v1/currencies/try-full.json?t=' + Date.now());
+        const data = await res.json();
+        const t = data.try || {};
+        ratesCache = {};
+        const keys = ['usd','eur','gbp','chf','xau_gram','xau_ceyrek','xau_yarim','xau_tam','xau_cumhuriyet','xag_gram'];
+        keys.forEach(k => {
+          if (t[k] && typeof t[k].ask === 'number') ratesCache[k] = t[k].ask;
+          else if (t[k] && typeof t[k].bid === 'number') ratesCache[k] = t[k].bid;
+        });
+        ratesUpdatedAt = data.updated_at || new Date().toISOString();
+        if (info) {
+          const d = new Date(ratesUpdatedAt);
+          info.textContent = 'Kurlar: ' + d.toLocaleString('tr-TR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+        }
+        renderReceivables();
+        showToast('Kurlar güncellendi');
+      } catch (e) {
+        if (info) info.textContent = 'Kurlar alınamadı — interneti kontrol et';
+        showToast('Kur güncellenemedi', 'error');
+      }
+      if (btn) btn.disabled = false;
+    }
+
+    function assetDisplay(amount, asset) {
+      const unit = ASSET_UNIT[asset] || asset;
+      // Tam sayı ise .00 gösterme
+      const amt = Number(amount);
+      const amtStr = Number.isInteger(amt) ? String(amt) : amt.toLocaleString('tr-TR');
+      return `${amtStr} ${unit}`;
+    }
+
+    function toTL(amount, asset) {
+      const rate = ratesCache[asset];
+      if (rate == null) return null;
+      return amount * rate;
+    }
+
+    function saveReceivable(e) {
+      e.preventDefault();
+      const id = document.getElementById('recvEditId').value;
+      const asset = document.getElementById('recvAsset').value;
+      const amount = parseFloat(document.getElementById('recvAmount').value);
+      const recvType = document.getElementById('recvType').value;
+      const person = document.getElementById('recvPerson').value.trim();
+      const date = document.getElementById('recvDate').value;
+      const note = document.getElementById('recvNote').value.trim();
+
+      if (!amount || amount <= 0 || !person || !date) {
+        showToast('Tüm zorunlu alanları doldur', 'error');
+        return;
+      }
+
+      if (id) {
+        const idx = state.receivables.findIndex(r => r.id === id);
+        if (idx !== -1) state.receivables[idx] = { id, asset, amount, type: recvType, person, date, note };
+        showToast('Alacak güncellendi');
+      } else {
+        state.receivables.push({ id: uid(), asset, amount, type: recvType, person, date, note });
+        showToast('Alacak eklendi');
+      }
+      save();
+      closeModal('receivable');
+      renderReceivables();
+    }
+
+    function editReceivable(id) {
+      const r = state.receivables.find(x => x.id === id);
+      if (!r) return;
+      document.getElementById('recvModalTitle').textContent = 'Alacağı Düzenle';
+      document.getElementById('recvEditId').value = r.id;
+      document.getElementById('recvAsset').value = r.asset;
+      document.getElementById('recvAmount').value = r.amount;
+      document.getElementById('recvType').value = r.type || 'Borç';
+      document.getElementById('recvPerson').value = r.person;
+      document.getElementById('recvDate').value = r.date;
+      document.getElementById('recvNote').value = r.note || '';
+      const modal = document.getElementById('modalReceivable');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function deleteReceivable(id) {
+      if (!confirm('Bu alacağı silmek istediğine emin misin?')) return;
+      state.receivables = state.receivables.filter(r => r.id !== id);
+      save();
+      renderReceivables();
+      showToast('Alacak silindi');
+    }
+
+    function toggleRecvDetail(id) {
+      const el = document.getElementById('recvDetail-' + id);
+      if (!el) return;
+      el.classList.toggle('hidden');
+    }
+
+    function renderReceivables() {
+      const list = document.getElementById('recvList');
+      const empty = document.getElementById('recvEmpty');
+      if (!list) return;
+
+      const items = [...state.receivables].sort((a, b) => a.date.localeCompare(b.date));
+      let totalTL = 0;
+      let hasAllRates = true;
+      const now = new Date();
+      const in7 = new Date(now.getTime() + 7 * 86400000);
+      let upcoming = 0;
+
+      items.forEach(r => {
+        const tl = toTL(r.amount, r.asset);
+        if (tl != null) totalTL += tl; else hasAllRates = false;
+        const d = new Date(r.date + 'T00:00:00');
+        if (d >= now && d <= in7) upcoming++;
+      });
+
+      document.getElementById('recvTotalTL').textContent = hasAllRates || items.length === 0
+        ? formatMoney(totalTL)
+        : formatMoney(totalTL) + '*';
+      document.getElementById('recvCount').textContent = items.length;
+      document.getElementById('recvUpcoming').textContent = upcoming;
+
+      if (items.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      list.innerHTML = items.map(r => {
+        const tl = toTL(r.amount, r.asset);
+        const rate = ratesCache[r.asset];
+        const label = assetDisplay(r.amount, r.asset);
+        const overdue = new Date(r.date + 'T00:00:00') < new Date(new Date().toDateString());
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <button type="button" onclick="toggleRecvDetail('${r.id}')" class="w-full text-left p-4 sm:p-5 flex items-center gap-3 hover:bg-slate-50 transition">
+              <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+                <i class="fas fa-${r.asset.startsWith('xau') || r.asset.startsWith('xag') ? 'coins' : 'dollar-sign'}"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="font-semibold text-slate-900 text-base">${label}</div>
+                <div class="text-sm text-slate-500 truncate">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 mr-1">${r.type || 'Borç'}</span>
+                  ${r.person} · ${formatDate(r.date)}${overdue ? ' <span class="text-rose-500">(vadesi geçmiş)</span>' : ''}
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-xs text-slate-400">TL ≈</div>
+                <div class="font-semibold text-amber-600">${tl != null ? formatMoney(tl) : '—'}</div>
+              </div>
+              <i class="fas fa-chevron-down text-slate-300 text-xs ml-1"></i>
+            </button>
+            <div id="recvDetail-${r.id}" class="hidden border-t border-slate-100 px-4 sm:px-5 py-4 bg-slate-50 space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-slate-500">Varlık</span><span class="font-medium text-slate-800">${label}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Alacak türü</span><span class="font-medium text-slate-800">${r.type || 'Borç'}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">TL karşılığı</span><span class="font-semibold text-amber-600">${tl != null ? formatMoney(tl) : 'Kur yüklenemedi'}</span></div>
+              ${rate != null ? `<div class="flex justify-between"><span class="text-slate-500">Birim kur</span><span class="text-slate-700">${formatMoney(rate)}</span></div>` : ''}
+              <div class="flex justify-between"><span class="text-slate-500">Kimden</span><span class="font-medium text-slate-800">${r.person}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Alacak tarihi</span><span class="text-slate-800">${formatDate(r.date)}</span></div>
+              ${r.note ? `<div class="flex justify-between gap-4"><span class="text-slate-500 shrink-0">Not</span><span class="text-slate-700 text-right">${r.note}</span></div>` : ''}
+              <div class="flex gap-2 pt-2">
+                <button onclick="editReceivable('${r.id}')" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-white text-sm font-medium"><i class="fas fa-pen text-xs mr-1"></i> Düzenle</button>
+                <button onclick="deleteReceivable('${r.id}')" class="flex-1 px-3 py-2 border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 text-sm font-medium"><i class="fas fa-trash-alt text-xs mr-1"></i> Sil</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ========== INIT ==========
+    function refreshAll() {
+      fillCategorySelect();
+      updateSummary();
+      renderTransactions();
+      updateCharts();
+      renderExpensesView();
+      renderReceivables();
+    }
+
+    // Modal dışına tıklayınca kapat
+    document.querySelectorAll('[id^="modal"]').forEach(modal => {
+      modal.addEventListener('click', e => {
+        if (e.target === modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+      });
+    });
+
+    // ========== AUTH (sadece rakam şifre) ==========
+    const AUTH_KEY = 'finansTakipAuth';
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('avciDarkMode', isDark ? '1' : '0');
+      const icon = document.getElementById('darkModeIcon');
+      if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    function applyDarkMode() {
+      const saved = localStorage.getItem('avciDarkMode');
+      if (saved === '1') {
+        document.documentElement.classList.add('dark');
+        const icon = document.getElementById('darkModeIcon');
+        if (icon) icon.className = 'fas fa-sun';
+      }
+    }
+    applyDarkMode();
+
+    function hashPin(pin) {
+      // Basit hash (tarayıcı tarafı kilit; gerçek şifreleme değil)
+      let h = 0;
+      const s = 'ft_' + pin + '_salt';
+      for (let i = 0; i < s.length; i++) {
+        h = ((h << 5) - h) + s.charCodeAt(i);
+        h |= 0;
+      }
+      return 'h' + Math.abs(h).toString(36);
+    }
+
+    function getAuth() {
+      try {
+        const raw = localStorage.getItem(AUTH_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
+
+    function isDigitsOnly(str) {
+      return /^[0-9]+$/.test(str);
+    }
+
+    function showApp() {
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('appRoot').classList.remove('hidden');
+      load();
+      document.getElementById('filterMonth').value = '';
+      refreshAll();
+    }
+
+    function showAuthScreen() {
+      document.getElementById('authScreen').classList.remove('hidden');
+      document.getElementById('appRoot').classList.add('hidden');
+      const auth = getAuth();
+      const setupForm = document.getElementById('setupForm');
+      const loginForm = document.getElementById('loginForm');
+      const subtitle = document.getElementById('authSubtitle');
+
+      if (!auth) {
+        setupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        subtitle.textContent = 'İlk kurulum — hesap oluştur';
+      } else {
+        setupForm.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+        subtitle.textContent = 'Giriş yap';
+        document.getElementById('loginUsername').value = auth.username || '';
+      }
+    }
+
+    function handleSetup(e) {
+      e.preventDefault();
+      const username = document.getElementById('setupUsername').value.trim();
+      const pin = document.getElementById('setupPin').value;
+      const pin2 = document.getElementById('setupPin2').value;
+      const err = document.getElementById('setupError');
+
+      if (!username) {
+        err.textContent = 'Kullanıcı adı gerekli';
+        err.classList.remove('hidden');
+        return;
+      }
+      if (!isDigitsOnly(pin) || pin.length < 4 || pin.length > 8) {
+        err.textContent = 'Şifre sadece 4–8 haneli rakam olmalı';
+        err.classList.remove('hidden');
+        return;
+      }
+      if (pin !== pin2) {
+        err.textContent = 'Şifreler eşleşmiyor';
+        err.classList.remove('hidden');
+        return;
+      }
+      err.classList.add('hidden');
+      localStorage.setItem(AUTH_KEY, JSON.stringify({
+        username,
+        pinHash: hashPin(pin)
+      }));
+      showApp();
+      showToast('Hesap oluşturuldu');
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value.trim();
+      const pin = document.getElementById('loginPin').value;
+      const err = document.getElementById('loginError');
+      const auth = getAuth();
+
+      if (!auth) {
+        err.textContent = 'Hesap bulunamadı';
+        err.classList.remove('hidden');
+        return;
+      }
+      if (!isDigitsOnly(pin)) {
+        err.textContent = 'Şifre sadece rakamlardan oluşmalı';
+        err.classList.remove('hidden');
+        return;
+      }
+      if (username !== auth.username || hashPin(pin) !== auth.pinHash) {
+        err.textContent = 'Kullanıcı adı veya şifre hatalı';
+        err.classList.remove('hidden');
+        document.getElementById('loginPin').value = '';
+        return;
+      }
+      err.classList.add('hidden');
+      sessionStorage.setItem('finansTakipSession', '1');
+      showApp();
+    }
+
+    function logout() {
+      sessionStorage.removeItem('finansTakipSession');
+      document.getElementById('loginPin').value = '';
+      showAuthScreen();
+      showToast('Çıkış yapıldı', 'info');
+    }
+
+    // Sadece rakam girilsin
+    ['setupPin', 'setupPin2', 'loginPin'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', () => {
+          el.value = el.value.replace(/\D/g, '');
+        });
+      }
+    });
+
+    // Oturum kontrolü: aynı sekmede açık kalsın, kapatınca tekrar sorsun
+    if (sessionStorage.getItem('finansTakipSession') === '1' && getAuth()) {
+      showApp();
+    } else {
+      showAuthScreen();
+    }
+  </script>
+</body>
+</html>
