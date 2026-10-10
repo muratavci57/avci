@@ -1200,7 +1200,7 @@
         receivables.classList.remove('hidden');
         btnR.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white transition';
         renderReceivables();
-        if (!ratesUpdatedAt) refreshRates();
+        refreshRates(); // Her girişte kurları güncelle
       } else if (tab === 'admin' && admin) {
         admin.classList.remove('hidden');
         if (btnA) btnA.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition';
