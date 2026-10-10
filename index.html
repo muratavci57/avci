@@ -126,6 +126,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center gap-3">
+          <button onclick="toggleSideMenu()" class="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-bars text-lg"></i>
+          </button>
           <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md">
             <i class="fas fa-wallet text-sm"></i>
           </div>
@@ -135,52 +138,74 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="toggleDarkMode()" id="darkModeBtn" title="Koyu / açık mod" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
-            <i class="fas fa-moon" id="darkModeIcon"></i>
-          </button>
           <button onclick="openModal('transaction')" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
             <i class="fas fa-plus text-xs"></i>
             <span class="hidden sm:inline">İşlem Ekle</span>
-          </button>
-          <button onclick="openModal('category')" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition">
-            <i class="fas fa-tags text-xs"></i>
-            <span class="hidden sm:inline">Kategoriler</span>
-          </button>
-          <button onclick="exportData()" title="Veriyi dışa aktar (yedekle)" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
-            <i class="fas fa-download"></i>
-          </button>
-          <button onclick="document.getElementById('importFile').click()" title="Veriyi içe aktar (yedekten yükle)" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
-            <i class="fas fa-upload"></i>
-          </button>
-          <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importData(event)" />
-          <button onclick="confirmClear()" title="Tüm veriyi sil" class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
-            <i class="fas fa-trash-alt"></i>
-          </button>
-          <button onclick="logout()" title="Çıkış yap" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
-            <i class="fas fa-right-from-bracket"></i>
           </button>
         </div>
       </div>
     </div>
   </nav>
 
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-    <!-- Sekmeler -->
-    <div class="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm w-fit">
-      <button id="tabOverview" onclick="switchTab('overview')" class="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white transition">
-        <i class="fas fa-chart-pie mr-1.5 text-xs"></i> Genel Bakış
-      </button>
-      <button id="tabExpenses" onclick="switchTab('expenses')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
-        <i class="fas fa-receipt mr-1.5 text-xs"></i> Harcamalarım
-      </button>
-      <button id="tabReceivables" onclick="switchTab('receivables')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
-        <i class="fas fa-hand-holding-dollar mr-1.5 text-xs"></i> Alacaklarım
-      </button>
-      <button id="tabAdmin" onclick="switchTab('admin')" class="hidden px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
-        <i class="fas fa-user-shield mr-1.5 text-xs"></i> Admin
+  <!-- Sol Menü (Drawer) -->
+  <div id="sideMenuOverlay" onclick="toggleSideMenu()" class="fixed inset-0 bg-black/40 z-50 hidden"></div>
+  <aside id="sideMenu" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white">
+          <i class="fas fa-wallet text-sm"></i>
+        </div>
+        <div>
+          <div class="font-bold text-slate-900">AVCI</div>
+          <div class="text-xs text-slate-500">Muhasebe</div>
+        </div>
+      </div>
+      <button onclick="toggleSideMenu()" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">
+        <i class="fas fa-times"></i>
       </button>
     </div>
+
+    <div class="flex-1 overflow-y-auto p-4 space-y-1">
+      <p class="text-xs font-medium text-slate-400 uppercase tracking-wider px-3 pt-2 pb-1">Sayfalar</p>
+      <button onclick="switchTab('overview'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
+        <i class="fas fa-chart-pie w-5 text-center text-emerald-600"></i> Genel Bakış
+      </button>
+      <button onclick="switchTab('expenses'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
+        <i class="fas fa-receipt w-5 text-center text-rose-500"></i> Harcamalarım
+      </button>
+      <button onclick="switchTab('receivables'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
+        <i class="fas fa-hand-holding-dollar w-5 text-center text-amber-500"></i> Alacaklarım
+      </button>
+      <button id="menuAdmin" onclick="switchTab('admin'); toggleSideMenu();" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
+        <i class="fas fa-user-shield w-5 text-center text-indigo-500"></i> Admin
+      </button>
+
+      <p class="text-xs font-medium text-slate-400 uppercase tracking-wider px-3 pt-4 pb-1">Araçlar</p>
+      <button onclick="openModal('category'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
+        <i class="fas fa-tags w-5 text-center"></i> Kategoriler
+      </button>
+      <button onclick="exportData(); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
+        <i class="fas fa-download w-5 text-center"></i> Yedekle
+      </button>
+      <button onclick="document.getElementById('importFile').click(); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
+        <i class="fas fa-upload w-5 text-center"></i> Yedekten Yükle
+      </button>
+      <button onclick="confirmClear(); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-rose-600 hover:bg-rose-50 text-sm">
+        <i class="fas fa-trash-alt w-5 text-center"></i> Tümünü Sil
+      </button>
+      <button onclick="toggleDarkMode()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
+        <i class="fas fa-moon w-5 text-center" id="darkModeIconMenu"></i> Koyu Mod
+      </button>
+      <button onclick="logout(); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
+        <i class="fas fa-right-from-bracket w-5 text-center"></i> Çıkış Yap
+      </button>
+    </div>
+    <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importData(event)" />
+  </aside>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Sekmeler kaldırıldı, menüden erişiliyor -->
 
     <!-- ===== GENEL BAKIŞ ===== -->
     <div id="viewOverview" class="space-y-6">
@@ -1569,10 +1594,25 @@
       const auth = getAuth();
       currentUsername = auth ? auth.username : null;
       isAdminUser = currentUsername && (currentUsername.toLowerCase() === 'admin' || currentUsername.toLowerCase() === 'avci' || currentUsername.toLowerCase() === 'murat');
-      const tab = document.getElementById('tabAdmin');
-      if (tab) {
-        if (isAdminUser) tab.classList.remove('hidden');
-        else tab.classList.add('hidden');
+      const menuItem = document.getElementById('menuAdmin');
+      if (menuItem) {
+        if (isAdminUser) menuItem.classList.remove('hidden');
+        else menuItem.classList.add('hidden');
+      }
+    }
+
+    function toggleSideMenu() {
+      const menu = document.getElementById('sideMenu');
+      const overlay = document.getElementById('sideMenuOverlay');
+      const isOpen = menu.classList.contains('translate-x-0');
+      if (isOpen) {
+        menu.classList.remove('translate-x-0');
+        menu.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      } else {
+        menu.classList.remove('-translate-x-full');
+        menu.classList.add('translate-x-0');
+        overlay.classList.remove('hidden');
       }
     }
 
@@ -1649,16 +1689,19 @@
     function toggleDarkMode() {
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('avciDarkMode', isDark ? '1' : '0');
-      const icon = document.getElementById('darkModeIcon');
-      if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+      const icons = document.querySelectorAll('#darkModeIcon, #darkModeIconMenu');
+      icons.forEach(icon => {
+        if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+      });
     }
 
     function applyDarkMode() {
       const saved = localStorage.getItem('avciDarkMode');
       if (saved === '1') {
         document.documentElement.classList.add('dark');
-        const icon = document.getElementById('darkModeIcon');
-        if (icon) icon.className = 'fas fa-sun';
+        document.querySelectorAll('#darkModeIcon, #darkModeIconMenu').forEach(icon => {
+          if (icon) icon.className = 'fas fa-sun';
+        });
       }
     }
     applyDarkMode();
