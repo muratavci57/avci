@@ -1621,9 +1621,14 @@
                   <div class="font-semibold text-slate-900">${username}</div>
                   <div class="text-xs text-slate-400">Son giriş: ${lastLogin}</div>
                 </div>
-                <button onclick="toggleUserStatus('${username}', ${isActive})" class="px-3 py-1.5 rounded-lg text-xs font-medium ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
-                  ${isActive ? 'Aktif' : 'Pasif'}
-                </button>
+                <div class="flex items-center gap-2">
+                  <button onclick="toggleUserStatus('${username}', ${isActive})" class="px-3 py-1.5 rounded-lg text-xs font-medium ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                    ${isActive ? 'Aktif' : 'Pasif'}
+                  </button>
+                  <button onclick="deleteUser('${username}')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-100 text-rose-700 hover:bg-rose-200">
+                    Sil
+                  </button>
+                </div>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-3">
                 <div><div class="text-slate-500">Bakiye</div><div class="font-semibold ${balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatMoney(balance)}</div></div>
@@ -1636,6 +1641,19 @@
         }).join('');
       } catch (e) {
         if (status) status.textContent = "Hata: " + e.message;
+      }
+    }
+
+    async function deleteUser(username) {
+      if (!window.fbDb) return;
+      if (!confirm(`${username} kullanıcısını ve tüm verilerini silmek istediğine emin misin?`)) return;
+      try {
+        await window.fbDb.ref('users/' + username).remove();
+        await window.fbDb.ref('logs/' + username).remove();
+        showToast(username + ' silindi');
+        loadAdminData();
+      } catch (e) {
+        showToast('Silme başarısız', 'error');
       }
     }
 
