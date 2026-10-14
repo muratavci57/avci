@@ -67,8 +67,20 @@
       <!-- Profiller -->
       <div id="loginProfiles" class="flex flex-wrap justify-center gap-4 mb-6 hidden"></div>
 
-      <!-- Kurulum formu (ilk kez) -->
+      <!-- Kayıt formu -->
       <form id="setupForm" class="hidden space-y-4" onsubmit="handleSetup(event)">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">Ad</label>
+            <input type="text" id="setupFirstName" required placeholder="Ad"
+              class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">Soyad</label>
+            <input type="text" id="setupLastName" required placeholder="Soyad"
+              class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+        </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Kullanıcı adı</label>
           <input type="text" id="setupUsername" required autocomplete="username" placeholder="Örn: ahmet"
@@ -78,7 +90,6 @@
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Şifre (sadece rakam)</label>
           <input type="password" id="setupPin" required inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" placeholder="4-8 haneli rakam"
             class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 tracking-widest" />
-          <p class="text-xs text-slate-400 mt-1">Sadece rakam, 4–8 hane</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Şifre tekrar</label>
@@ -87,7 +98,10 @@
         </div>
         <p id="setupError" class="hidden text-sm text-rose-600"></p>
         <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition">
-          Hesabı Oluştur
+          Kayıt Ol
+        </button>
+        <button type="button" onclick="showLoginForm()" class="w-full py-2 text-sm text-slate-500 hover:text-slate-700">
+          Zaten hesabın var mı? Giriş yap
         </button>
       </form>
 
@@ -106,6 +120,9 @@
         <p id="loginError" class="hidden text-sm text-rose-600"></p>
         <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition">
           Giriş Yap
+        </button>
+        <button type="button" onclick="showRegisterForm()" class="w-full py-2 text-sm text-slate-500 hover:text-slate-700">
+          Hesabın yok mu? Kayıt ol
         </button>
       </form>
 
@@ -1824,27 +1841,27 @@
       const auth = getAuth();
       const setupForm = document.getElementById('setupForm');
       const loginForm = document.getElementById('loginForm');
-      const subtitle = document.getElementById('authSubtitle');
-
-      if (!auth) {
-        setupForm.classList.remove('hidden');
-        loginForm.classList.add('hidden');
-        subtitle.textContent = 'İlk kurulum — hesap oluştur';
-      } else {
-        setupForm.classList.add('hidden');
-        loginForm.classList.remove('hidden');
-        subtitle.textContent = 'Giriş yap';
+      if (setupForm) setupForm.classList.add('hidden');
+      if (loginForm) loginForm.classList.remove('hidden');
+      if (auth) {
         document.getElementById('loginUsername').value = auth.username || '';
       }
     }
 
     function handleSetup(e) {
       e.preventDefault();
+      const firstName = document.getElementById('setupFirstName').value.trim();
+      const lastName = document.getElementById('setupLastName').value.trim();
       const username = document.getElementById('setupUsername').value.trim();
       const pin = document.getElementById('setupPin').value;
       const pin2 = document.getElementById('setupPin2').value;
       const err = document.getElementById('setupError');
 
+      if (!firstName || !lastName) {
+        err.textContent = 'Ad ve soyad gerekli';
+        err.classList.remove('hidden');
+        return;
+      }
       if (!username) {
         err.textContent = 'Kullanıcı adı gerekli';
         err.classList.remove('hidden');
@@ -1863,14 +1880,29 @@
       err.classList.add('hidden');
       localStorage.setItem(AUTH_KEY, JSON.stringify({
         username,
+        firstName,
+        lastName,
         pinHash: hashPin(pin)
       }));
       showApp();
       if (window.fbDb) {
         ensureUserMeta(username);
         logActivity(username, 'Hesap oluşturuldu');
+        window.fbDb.ref('profiles/' + username).set({
+          firstName, lastName, photo: '', updatedAt: new Date().toISOString()
+        }).catch(() => {});
       }
       showToast('Hesap oluşturuldu');
+    }
+
+    function showRegisterForm() {
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('setupForm').classList.remove('hidden');
+    }
+
+    function showLoginForm() {
+      document.getElementById('setupForm').classList.add('hidden');
+      document.getElementById('loginForm').classList.remove('hidden');
     }
 
     async function handleLogin(e) {
