@@ -433,7 +433,7 @@
           <p id="recvCount" class="text-2xl font-bold text-slate-900 mt-1">0</p>
         </div>
         <div class="card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-          <p class="text-sm font-medium text-slate-500">Yaklaşan (7 gün)</p>
+          <p class="text-sm font-medium text-slate-500">Yaklaşan (30 gün)</p>
           <p id="recvUpcoming" class="text-2xl font-bold text-indigo-600 mt-1">0</p>
         </div>
       </div>
@@ -1379,7 +1379,32 @@
     }
 
     function toTL(amount, asset) {
-      const rate = ratesCache[asset];
+      if (!asset) return null;
+      const key = asset.toLowerCase().trim();
+      // Serbest metin → bilinen kur anahtarı
+      const map = {
+        'gram altın': 'xau_gram',
+        'gram altin': 'xau_gram',
+        '1 gram altın': 'xau_gram',
+        'altın': 'xau_gram',
+        'altin': 'xau_gram',
+        'çeyrek': 'xau_ceyrek',
+        'ceyrek': 'xau_ceyrek',
+        'yarım': 'xau_yarim',
+        'yarim': 'xau_yarim',
+        'tam altın': 'xau_tam',
+        'cumhuriyet': 'xau_cumhuriyet',
+        'gümüş': 'xag_gram',
+        'gumus': 'xag_gram',
+        'usd': 'usd',
+        'dolar': 'usd',
+        'euro': 'eur',
+        'eur': 'eur',
+        'sterlin': 'gbp',
+        'gbp': 'gbp'
+      };
+      const rateKey = map[key] || key;
+      const rate = ratesCache[rateKey];
       if (rate == null) return null;
       return amount * rate;
     }
@@ -1451,14 +1476,14 @@
       let totalTL = 0;
       let hasAllRates = true;
       const now = new Date();
-      const in7 = new Date(now.getTime() + 7 * 86400000);
+      const in30 = new Date(now.getTime() + 30 * 86400000);
       let upcoming = 0;
 
       items.forEach(r => {
         const tl = toTL(r.amount, r.asset);
         if (tl != null) totalTL += tl; else hasAllRates = false;
         const d = new Date(r.date + 'T00:00:00');
-        if (d >= now && d <= in7) upcoming++;
+        if (d >= now && d <= in30) upcoming++;
       });
 
       document.getElementById('recvTotalTL').textContent = hasAllRates || items.length === 0
