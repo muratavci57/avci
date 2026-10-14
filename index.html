@@ -129,18 +129,14 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md">
-            <i class="fas fa-wallet text-sm"></i>
-          </div>
           <div>
             <h1 class="text-lg font-bold text-slate-900 leading-tight">AVCI</h1>
             <p class="text-xs text-slate-500">Muhasebe</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="openModal('transaction')" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
-            <i class="fas fa-plus text-xs"></i>
-            <span class="hidden sm:inline">İşlem Ekle</span>
+          <button id="tabAdminNav" onclick="switchTab('admin')" class="hidden px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 transition">
+            <i class="fas fa-user-shield mr-1 text-xs"></i> Admin
           </button>
           <button onclick="openModal('category')" title="Kategoriler" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
             <i class="fas fa-tags"></i>
@@ -165,25 +161,17 @@
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <!-- Sekmeler + İşlem Ekle -->
-    <div class="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
-      <div class="flex flex-wrap items-center gap-2">
-        <button id="tabOverview" onclick="switchTab('overview')" class="px-4 py-2.5 text-sm font-medium rounded-xl bg-emerald-600 text-white transition flex items-center gap-2">
-          <i class="fas fa-chart-pie text-xs"></i> Genel Bakış
-        </button>
-        <button id="tabExpenses" onclick="switchTab('expenses')" class="px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
-          <i class="fas fa-receipt text-xs"></i> Harcamalarım
-        </button>
-        <button id="tabReceivables" onclick="switchTab('receivables')" class="px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
-          <i class="fas fa-hand-holding-dollar text-xs"></i> Alacaklarım
-        </button>
-        <button id="tabAdmin" onclick="switchTab('admin')" class="hidden px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
-          <i class="fas fa-user-shield text-xs"></i> Admin
-        </button>
-        <button onclick="openModal('transaction')" class="ml-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition flex items-center gap-2 shadow-sm">
-          <i class="fas fa-plus text-xs"></i> İşlem Ekle
-        </button>
-      </div>
+    <!-- Sekmeler -->
+    <div class="grid grid-cols-3 gap-3">
+      <button id="tabOverview" onclick="switchTab('overview')" class="py-3.5 text-sm font-semibold rounded-2xl bg-emerald-600 text-white shadow-md transition flex items-center justify-center gap-2">
+        <i class="fas fa-chart-pie"></i> Genel Bakış
+      </button>
+      <button id="tabExpenses" onclick="switchTab('expenses')" class="py-3.5 text-sm font-semibold rounded-2xl bg-slate-800 text-slate-200 hover:bg-slate-700 transition flex items-center justify-center gap-2">
+        <i class="fas fa-receipt"></i> Harcamalarım
+      </button>
+      <button id="tabReceivables" onclick="switchTab('receivables')" class="py-3.5 text-sm font-semibold rounded-2xl bg-slate-800 text-slate-200 hover:bg-slate-700 transition flex items-center justify-center gap-2">
+        <i class="fas fa-hand-holding-dollar"></i> Alacaklarım
+      </button>
     </div>
 
     <!-- ===== GENEL BAKIŞ ===== -->
@@ -1172,33 +1160,32 @@
       const btnO = document.getElementById('tabOverview');
       const btnE = document.getElementById('tabExpenses');
       const btnR = document.getElementById('tabReceivables');
-      const btnA = document.getElementById('tabAdmin');
+      const btnA = document.getElementById('tabAdminNav');
 
       overview.classList.add('hidden');
       expenses.classList.add('hidden');
       receivables.classList.add('hidden');
       if (admin) admin.classList.add('hidden');
 
-      [btnO, btnE, btnR, btnA].forEach(b => {
-        if (b) b.className = 'px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100 transition flex items-center gap-2';
+      [btnO, btnE, btnR].forEach(b => {
+        if (b) b.className = 'py-3.5 text-sm font-semibold rounded-2xl bg-slate-800 text-slate-200 hover:bg-slate-700 transition flex items-center justify-center gap-2';
       });
 
       if (tab === 'overview') {
         overview.classList.remove('hidden');
-        if (btnO) btnO.className = 'px-4 py-2.5 text-sm font-medium rounded-xl bg-emerald-600 text-white transition flex items-center gap-2';
+        if (btnO) btnO.className = 'py-3.5 text-sm font-semibold rounded-2xl bg-emerald-600 text-white shadow-md transition flex items-center justify-center gap-2';
         updateCharts();
       } else if (tab === 'expenses') {
         expenses.classList.remove('hidden');
-        if (btnE) btnE.className = 'px-4 py-2.5 text-sm font-medium rounded-xl bg-rose-600 text-white transition flex items-center gap-2';
+        if (btnE) btnE.className = 'py-3.5 text-sm font-semibold rounded-2xl bg-rose-600 text-white shadow-md transition flex items-center justify-center gap-2';
         renderExpensesView();
       } else if (tab === 'receivables') {
         receivables.classList.remove('hidden');
-        if (btnR) btnR.className = 'px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-600 text-white transition flex items-center gap-2';
+        if (btnR) btnR.className = 'py-3.5 text-sm font-semibold rounded-2xl bg-amber-600 text-white shadow-md transition flex items-center justify-center gap-2';
         renderReceivables();
         refreshRates();
       } else if (tab === 'admin' && admin) {
         admin.classList.remove('hidden');
-        if (btnA) btnA.className = 'px-4 py-2.5 text-sm font-medium rounded-xl bg-indigo-600 text-white transition flex items-center gap-2';
         loadAdminData();
       }
     }
@@ -1563,9 +1550,12 @@
     function checkAdminAndShowTab() {
       const auth = getAuth();
       currentUsername = auth ? auth.username : null;
-      isAdminUser = true;
-      const tab = document.getElementById('tabAdmin');
-      if (tab) tab.classList.remove('hidden');
+      isAdminUser = currentUsername && currentUsername.toLowerCase() === 'muratavci';
+      const tab = document.getElementById('tabAdminNav');
+      if (tab) {
+        if (isAdminUser) tab.classList.remove('hidden');
+        else tab.classList.add('hidden');
+      }
     }
 
     function toggleSideMenu() {
@@ -1625,9 +1615,10 @@
                   <button onclick="toggleUserStatus('${username}', ${isActive})" class="px-3 py-1.5 rounded-lg text-xs font-medium ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
                     ${isActive ? 'Aktif' : 'Pasif'}
                   </button>
+                  ${username.toLowerCase() !== 'muratavci' ? `
                   <button onclick="deleteUser('${username}')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-100 text-rose-700 hover:bg-rose-200">
                     Sil
-                  </button>
+                  </button>` : '<span class="text-xs text-slate-400">Yönetici</span>'}
                 </div>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-3">
@@ -1646,6 +1637,10 @@
 
     async function deleteUser(username) {
       if (!window.fbDb) return;
+      if (username.toLowerCase() === 'muratavci') {
+        showToast('Yönetici hesabı silinemez', 'error');
+        return;
+      }
       if (!confirm(`${username} kullanıcısını ve tüm verilerini silmek istediğine emin misin?`)) return;
       try {
         await window.fbDb.ref('users/' + username).remove();
