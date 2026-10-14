@@ -134,26 +134,28 @@
             <p class="text-xs text-slate-500">Muhasebe</p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 relative">
           <button id="tabAdminNav" onclick="switchTab('admin')" class="hidden px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 transition">
             <i class="fas fa-user-shield mr-1 text-xs"></i> Admin
           </button>
-          <button onclick="openModal('category')" title="Kategoriler" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
-            <i class="fas fa-tags"></i>
+          <button onclick="toggleMoreMenu()" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-ellipsis-vertical text-lg"></i>
           </button>
-          <button onclick="exportData()" title="Yedekle" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
-            <i class="fas fa-download"></i>
-          </button>
-          <button onclick="document.getElementById('importFile').click()" title="Yedekten Yükle" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
-            <i class="fas fa-upload"></i>
-          </button>
-          <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importData(event)" />
-          <button onclick="confirmClear()" title="Tümünü Sil" class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
-            <i class="fas fa-trash-alt"></i>
-          </button>
-          <button onclick="logout()" title="Çıkış" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
-            <i class="fas fa-right-from-bracket"></i>
-          </button>
+          <div id="moreMenu" class="hidden absolute right-0 top-12 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl py-1 z-50">
+            <button onclick="exportData(); toggleMoreMenu();" class="w-full text-left px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+              <i class="fas fa-download w-4"></i> Yedekle
+            </button>
+            <button onclick="document.getElementById('importFile').click(); toggleMoreMenu();" class="w-full text-left px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+              <i class="fas fa-upload w-4"></i> Yedekten Yükle
+            </button>
+            <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importData(event)" />
+            <button onclick="confirmClear(); toggleMoreMenu();" class="w-full text-left px-4 py-2.5 text-sm text-rose-400 hover:bg-slate-800 flex items-center gap-2">
+              <i class="fas fa-trash-alt w-4"></i> Tümünü Sil
+            </button>
+            <button onclick="logout(); toggleMoreMenu();" class="w-full text-left px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+              <i class="fas fa-right-from-bracket w-4"></i> Çıkış Yap
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1923,6 +1925,17 @@
         showApp();
       }
     }
+
+    function toggleMoreMenu() {
+      const menu = document.getElementById('moreMenu');
+      if (menu) menu.classList.toggle('hidden');
+    }
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('moreMenu');
+      if (menu && !menu.contains(e.target) && !e.target.closest('[onclick*="toggleMoreMenu"]')) {
+        menu.classList.add('hidden');
+      }
+    });
 
     function logout() {
       sessionStorage.removeItem('finansTakipSession');
