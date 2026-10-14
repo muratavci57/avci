@@ -121,10 +121,10 @@
         <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition">
           Giriş Yap
         </button>
-        <button type="button" onclick="showRegisterForm()" class="w-full py-2 text-sm text-slate-500 hover:text-slate-700">
-          Hesabın yok mu? Kayıt ol
-        </button>
       </form>
+      <button type="button" id="btnShowRegister" onclick="showRegisterForm()" class="w-full mt-3 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-xl hover:bg-slate-50">
+        Hesabın yok mu? Kayıt Ol
+      </button>
 
       <!-- Yedekten yükle: kullanıcı adı + şifre de gelir -->
       <div class="mt-5 pt-5 border-t border-slate-100">
@@ -1896,13 +1896,21 @@
     }
 
     function showRegisterForm() {
-      document.getElementById('loginForm').classList.add('hidden');
-      document.getElementById('setupForm').classList.remove('hidden');
+      const login = document.getElementById('loginForm');
+      const setup = document.getElementById('setupForm');
+      const btn = document.getElementById('btnShowRegister');
+      if (login) login.classList.add('hidden');
+      if (setup) setup.classList.remove('hidden');
+      if (btn) btn.classList.add('hidden');
     }
 
     function showLoginForm() {
-      document.getElementById('setupForm').classList.add('hidden');
-      document.getElementById('loginForm').classList.remove('hidden');
+      const login = document.getElementById('loginForm');
+      const setup = document.getElementById('setupForm');
+      const btn = document.getElementById('btnShowRegister');
+      if (setup) setup.classList.add('hidden');
+      if (login) login.classList.remove('hidden');
+      if (btn) btn.classList.remove('hidden');
     }
 
     async function handleLogin(e) {
