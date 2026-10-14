@@ -68,6 +68,9 @@
         <p id="authSubtitle" class="text-sm text-slate-500 mt-2">Giriş yap</p>
       </div>
 
+      <!-- Profiller -->
+      <div id="loginProfiles" class="flex flex-wrap justify-center gap-4 mb-5 hidden"></div>
+
       <!-- Kurulum formu (ilk kez) -->
       <form id="setupForm" class="hidden space-y-4" onsubmit="handleSetup(event)">
         <div>
@@ -1576,6 +1579,7 @@
       }
     }
     initFirebase();
+    setTimeout(loadLoginProfiles, 800);
 
     function checkAdminAndShowTab() {
       const auth = getAuth();
@@ -1820,6 +1824,7 @@
     function showAuthScreen() {
       document.getElementById('authScreen').classList.remove('hidden');
       document.getElementById('appRoot').classList.add('hidden');
+      loadLoginProfiles();
       const auth = getAuth();
       const setupForm = document.getElementById('setupForm');
       const loginForm = document.getElementById('loginForm');
@@ -2004,8 +2009,38 @@
       }
 
       localStorage.setItem(AUTH_KEY, JSON.stringify(updated));
+      // Firebase'e profil kaydet
+      if (window.fbDb && updated.username) {
+        window.fbDb.ref('profiles/' + updated.username).set({
+          firstName: updated.firstName || '',
+          lastName: updated.lastName || '',
+          photo: updated.photo || '',
+          updatedAt: new Date().toISOString()
+        }).catch(() => {});
+      }
       showToast('Profil kaydedildi');
       closeModal('profile');
+    }
+
+    async function loadLoginProfiles() {
+      const container = document.getElementById('loginProfiles');
+      if (!container || !window.fbDb) return;
+      try {
+        const snap = await window.fbDb.ref('profiles').once('value');
+        const profiles = snap.val() || {};
+        const list = Object.entries(profiles).filter(([_, p]) => p.photo);
+        if (list.length === 0) {
+          container.classList.add('hidden');
+          return;
+        }
+        container.classList.remove('hidden');
+        container.innerHTML = list.map(([username, p]) => `
+          <button type="button" onclick="document.getElementById('loginUsername').value='${username}'; document.getElementById('loginPin').focus();" class="flex flex-col items-center gap-1 group">
+            <img src="${p.photo}" class="w-16 h-16 rounded-full object-cover border-2 border-slate-200 group-hover:border-emerald-500 transition" />
+            <span class="text-xs text-slate-600 max-w-[70px] truncate">${(p.firstName || '') + ' ' + (p.lastName || '')}</span>
+          </button>
+        `).join('');
+      } catch (e) {}
     }
 
     function toggleMoreMenu() {
