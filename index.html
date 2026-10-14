@@ -129,9 +129,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center gap-3">
-          <button onclick="toggleSideMenu()" class="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg transition">
-            <i class="fas fa-bars text-lg"></i>
-          </button>
           <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md">
             <i class="fas fa-wallet text-sm"></i>
           </div>
@@ -145,70 +142,44 @@
             <i class="fas fa-plus text-xs"></i>
             <span class="hidden sm:inline">İşlem Ekle</span>
           </button>
+          <button onclick="openModal('category')" title="Kategoriler" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-tags"></i>
+          </button>
+          <button onclick="exportData()" title="Yedekle" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-download"></i>
+          </button>
+          <button onclick="document.getElementById('importFile').click()" title="Yedekten Yükle" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-upload"></i>
+          </button>
+          <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importData(event)" />
+          <button onclick="confirmClear()" title="Tümünü Sil" class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+          <button onclick="logout()" title="Çıkış" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+            <i class="fas fa-right-from-bracket"></i>
+          </button>
         </div>
       </div>
     </div>
   </nav>
 
-  <!-- Sol Menü (Drawer) -->
-  <div id="sideMenuOverlay" onclick="toggleSideMenu()" class="fixed inset-0 bg-black/40 z-50 hidden"></div>
-  <aside id="sideMenu" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
-    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white">
-          <i class="fas fa-wallet text-sm"></i>
-        </div>
-        <div>
-          <div class="font-bold text-slate-900">AVCI</div>
-          <div class="text-xs text-slate-500">Muhasebe</div>
-        </div>
-      </div>
-      <button onclick="toggleSideMenu()" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-
-    <div class="flex-1 overflow-y-auto p-4 space-y-1">
-      <p class="text-xs font-medium text-slate-400 uppercase tracking-wider px-3 pt-2 pb-1">Sayfalar</p>
-      <button onclick="switchTab('overview'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
-        <i class="fas fa-chart-pie w-5 text-center text-emerald-600"></i> Genel Bakış
-      </button>
-      <button onclick="switchTab('expenses'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
-        <i class="fas fa-receipt w-5 text-center text-rose-500"></i> Harcamalarım
-      </button>
-      <button onclick="switchTab('receivables'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
-        <i class="fas fa-hand-holding-dollar w-5 text-center text-amber-500"></i> Alacaklarım
-      </button>
-      <button id="menuAdmin" onclick="switchTab('admin'); toggleSideMenu();" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
-        <i class="fas fa-user-shield w-5 text-center text-indigo-500"></i> Admin
-      </button>
-
-      <p class="text-xs font-medium text-slate-400 uppercase tracking-wider px-3 pt-4 pb-1">Araçlar</p>
-      <button onclick="openModal('category'); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-        <i class="fas fa-tags w-5 text-center"></i> Kategoriler
-      </button>
-      <button onclick="exportData(); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-        <i class="fas fa-download w-5 text-center"></i> Yedekle
-      </button>
-      <button onclick="document.getElementById('importFile').click(); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-        <i class="fas fa-upload w-5 text-center"></i> Yedekten Yükle
-      </button>
-      <button onclick="confirmClear(); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-rose-600 hover:bg-rose-50 text-sm">
-        <i class="fas fa-trash-alt w-5 text-center"></i> Tümünü Sil
-      </button>
-      <button onclick="toggleDarkMode()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-        <i class="fas fa-moon w-5 text-center" id="darkModeIconMenu"></i> Koyu Mod
-      </button>
-      <button onclick="logout(); toggleSideMenu();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-        <i class="fas fa-right-from-bracket w-5 text-center"></i> Çıkış Yap
-      </button>
-    </div>
-    <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importData(event)" />
-  </aside>
-
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <!-- Sekmeler kaldırıldı, menüden erişiliyor -->
+    <!-- Sekmeler -->
+    <div class="flex flex-wrap gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm w-fit">
+      <button id="tabOverview" onclick="switchTab('overview')" class="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white transition">
+        <i class="fas fa-chart-pie mr-1.5 text-xs"></i> Genel Bakış
+      </button>
+      <button id="tabExpenses" onclick="switchTab('expenses')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <i class="fas fa-receipt mr-1.5 text-xs"></i> Harcamalarım
+      </button>
+      <button id="tabReceivables" onclick="switchTab('receivables')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <i class="fas fa-hand-holding-dollar mr-1.5 text-xs"></i> Alacaklarım
+      </button>
+      <button id="tabAdmin" onclick="switchTab('admin')" class="hidden px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <i class="fas fa-user-shield mr-1.5 text-xs"></i> Admin
+      </button>
+    </div>
 
     <!-- ===== GENEL BAKIŞ ===== -->
     <div id="viewOverview" class="space-y-6">
@@ -1193,24 +1164,36 @@
       const expenses = document.getElementById('viewExpenses');
       const receivables = document.getElementById('viewReceivables');
       const admin = document.getElementById('viewAdmin');
+      const btnO = document.getElementById('tabOverview');
+      const btnE = document.getElementById('tabExpenses');
+      const btnR = document.getElementById('tabReceivables');
+      const btnA = document.getElementById('tabAdmin');
 
       overview.classList.add('hidden');
       expenses.classList.add('hidden');
       receivables.classList.add('hidden');
       if (admin) admin.classList.add('hidden');
 
+      [btnO, btnE, btnR, btnA].forEach(b => {
+        if (b) b.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
+      });
+
       if (tab === 'overview') {
         overview.classList.remove('hidden');
+        if (btnO) btnO.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white transition';
         updateCharts();
       } else if (tab === 'expenses') {
         expenses.classList.remove('hidden');
+        if (btnE) btnE.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-rose-600 text-white transition';
         renderExpensesView();
       } else if (tab === 'receivables') {
         receivables.classList.remove('hidden');
+        if (btnR) btnR.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white transition';
         renderReceivables();
         refreshRates();
       } else if (tab === 'admin' && admin) {
         admin.classList.remove('hidden');
+        if (btnA) btnA.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition';
         loadAdminData();
       }
     }
@@ -1575,11 +1558,9 @@
     function checkAdminAndShowTab() {
       const auth = getAuth();
       currentUsername = auth ? auth.username : null;
-      isAdminUser = true; // Herkes Admin menüsünü görebilsin
-      const menuItem = document.getElementById('menuAdmin');
-      if (menuItem) {
-        menuItem.classList.remove('hidden');
-      }
+      isAdminUser = true;
+      const tab = document.getElementById('tabAdmin');
+      if (tab) tab.classList.remove('hidden');
     }
 
     function toggleSideMenu() {
