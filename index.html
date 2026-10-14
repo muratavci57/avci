@@ -165,20 +165,25 @@
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <!-- Sekmeler -->
-    <div class="flex flex-wrap gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm w-fit">
-      <button id="tabOverview" onclick="switchTab('overview')" class="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white transition">
-        <i class="fas fa-chart-pie mr-1.5 text-xs"></i> Genel Bakış
-      </button>
-      <button id="tabExpenses" onclick="switchTab('expenses')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
-        <i class="fas fa-receipt mr-1.5 text-xs"></i> Harcamalarım
-      </button>
-      <button id="tabReceivables" onclick="switchTab('receivables')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
-        <i class="fas fa-hand-holding-dollar mr-1.5 text-xs"></i> Alacaklarım
-      </button>
-      <button id="tabAdmin" onclick="switchTab('admin')" class="hidden px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition">
-        <i class="fas fa-user-shield mr-1.5 text-xs"></i> Admin
-      </button>
+    <!-- Sekmeler + İşlem Ekle -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="tabOverview" onclick="switchTab('overview')" class="px-4 py-2.5 text-sm font-medium rounded-xl bg-emerald-600 text-white transition flex items-center gap-2">
+          <i class="fas fa-chart-pie text-xs"></i> Genel Bakış
+        </button>
+        <button id="tabExpenses" onclick="switchTab('expenses')" class="px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+          <i class="fas fa-receipt text-xs"></i> Harcamalarım
+        </button>
+        <button id="tabReceivables" onclick="switchTab('receivables')" class="px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+          <i class="fas fa-hand-holding-dollar text-xs"></i> Alacaklarım
+        </button>
+        <button id="tabAdmin" onclick="switchTab('admin')" class="hidden px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+          <i class="fas fa-user-shield text-xs"></i> Admin
+        </button>
+        <button onclick="openModal('transaction')" class="ml-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition flex items-center gap-2 shadow-sm">
+          <i class="fas fa-plus text-xs"></i> İşlem Ekle
+        </button>
+      </div>
     </div>
 
     <!-- ===== GENEL BAKIŞ ===== -->
@@ -1175,25 +1180,25 @@
       if (admin) admin.classList.add('hidden');
 
       [btnO, btnE, btnR, btnA].forEach(b => {
-        if (b) b.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition';
+        if (b) b.className = 'px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100 transition flex items-center gap-2';
       });
 
       if (tab === 'overview') {
         overview.classList.remove('hidden');
-        if (btnO) btnO.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white transition';
+        if (btnO) btnO.className = 'px-4 py-2.5 text-sm font-medium rounded-xl bg-emerald-600 text-white transition flex items-center gap-2';
         updateCharts();
       } else if (tab === 'expenses') {
         expenses.classList.remove('hidden');
-        if (btnE) btnE.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-rose-600 text-white transition';
+        if (btnE) btnE.className = 'px-4 py-2.5 text-sm font-medium rounded-xl bg-rose-600 text-white transition flex items-center gap-2';
         renderExpensesView();
       } else if (tab === 'receivables') {
         receivables.classList.remove('hidden');
-        if (btnR) btnR.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white transition';
+        if (btnR) btnR.className = 'px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-600 text-white transition flex items-center gap-2';
         renderReceivables();
         refreshRates();
       } else if (tab === 'admin' && admin) {
         admin.classList.remove('hidden');
-        if (btnA) btnA.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition';
+        if (btnA) btnA.className = 'px-4 py-2.5 text-sm font-medium rounded-xl bg-indigo-600 text-white transition flex items-center gap-2';
         loadAdminData();
       }
     }
