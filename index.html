@@ -58,18 +58,14 @@
 
   <!-- ========== GİRİŞ / KURULUM EKRANI ========== -->
   <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 p-4">
-    <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 fade-in">
-      <div class="text-center mb-6">
-        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg mb-3">
-          <i class="fas fa-wallet text-xl"></i>
-        </div>
-        <h1 class="text-xl font-bold text-slate-900">AVCI</h1>
-        <p class="text-xs text-slate-500">Muhasebe</p>
-        <p id="authSubtitle" class="text-sm text-slate-500 mt-2">Giriş yap</p>
+    <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 fade-in relative">
+      <div class="text-center mb-4">
+        <h1 class="text-2xl font-bold text-slate-900">AVCI</h1>
+        <p class="text-sm text-slate-500">Muhasebe</p>
       </div>
 
       <!-- Profiller -->
-      <div id="loginProfiles" class="flex flex-wrap justify-center gap-4 mb-5 hidden"></div>
+      <div id="loginProfiles" class="flex flex-wrap justify-center gap-4 mb-6 hidden"></div>
 
       <!-- Kurulum formu (ilk kez) -->
       <form id="setupForm" class="hidden space-y-4" onsubmit="handleSetup(event)">
@@ -1916,7 +1912,15 @@
         } catch (e) {}
       }
       sessionStorage.setItem('finansTakipSession', '1');
-      showApp();
+      const box = document.querySelector('#authScreen > div');
+      if (box) {
+        box.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-16">
+            <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-lg font-semibold text-slate-700">Giriş yapılıyor...</p>
+          </div>`;
+      }
+      setTimeout(() => showApp(), 1000);
       return true;
     }
 
@@ -1930,7 +1934,15 @@
       if (username === auth.username && hashPin(pin) === auth.pinHash) {
         document.getElementById('loginError').classList.add('hidden');
         sessionStorage.setItem('finansTakipSession', '1');
-        showApp();
+        const box = document.querySelector('#authScreen > div');
+        if (box) {
+          box.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-16">
+              <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p class="text-lg font-semibold text-slate-700">Giriş yapılıyor...</p>
+            </div>`;
+        }
+        setTimeout(() => showApp(), 1000);
       }
     }
 
@@ -2041,12 +2053,12 @@
         container.innerHTML = list.map(([username, p]) => {
           const name = ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || username;
           const img = p.photo
-            ? `<img src="${p.photo}" class="w-16 h-16 rounded-full object-cover border-2 border-slate-300 group-hover:border-emerald-500 transition" />`
-            : `<div class="w-16 h-16 rounded-full bg-slate-300 flex items-center justify-center text-slate-600"><i class="fas fa-user text-xl"></i></div>`;
+            ? `<img src="${p.photo}" class="w-28 h-28 rounded-full object-cover border-4 border-emerald-500 shadow-lg" />`
+            : `<div class="w-28 h-28 rounded-full bg-slate-300 flex items-center justify-center text-slate-600"><i class="fas fa-user text-3xl"></i></div>`;
           return `
-            <button type="button" onclick="document.getElementById('loginUsername').value='${username}'; document.getElementById('loginPin').focus();" class="flex flex-col items-center gap-1 group">
+            <button type="button" onclick="document.getElementById('loginUsername').value='${username}'; document.getElementById('loginPin').focus();" class="flex flex-col items-center gap-3 group">
               ${img}
-              <span class="text-xs text-slate-300 max-w-[80px] truncate">${name}</span>
+              <span class="text-xl font-bold text-slate-800 tracking-wide">${name.toUpperCase()}</span>
             </button>`;
         }).join('');
       } catch (e) {
