@@ -145,9 +145,14 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center gap-3">
-          <div>
-            <h1 class="text-lg font-bold text-slate-900 leading-tight">AVCI</h1>
-            <p class="text-xs text-slate-500">Muhasebe</p>
+          <div id="headerProfile" class="flex items-center gap-3">
+            <div id="headerAvatar" class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+              <i class="fas fa-user text-slate-400"></i>
+            </div>
+            <div>
+              <h1 id="headerName" class="text-lg font-bold text-slate-900 leading-tight">AVCI</h1>
+              <p class="text-xs text-slate-500">Muhasebe</p>
+            </div>
           </div>
         </div>
         <div class="flex items-center gap-2 relative">
@@ -1592,7 +1597,7 @@
       }
     }
     initFirebase();
-    setTimeout(loadLoginProfiles, 800);
+    // setTimeout(loadLoginProfiles, 800);
 
     function checkAdminAndShowTab() {
       const auth = getAuth();
@@ -1824,6 +1829,7 @@
       const auth = getAuth();
       currentUsername = auth ? auth.username : null;
       checkAdminAndShowTab();
+      updateHeaderProfile();
       await load();
       document.getElementById('filterMonth').value = '';
       refreshAll();
@@ -1834,10 +1840,24 @@
       }
     }
 
+    function updateHeaderProfile() {
+      const auth = getAuth();
+      if (!auth) return;
+      const nameEl = document.getElementById('headerName');
+      const avatarEl = document.getElementById('headerAvatar');
+      if (nameEl) {
+        const full = ((auth.firstName || '') + ' ' + (auth.lastName || '')).trim();
+        nameEl.textContent = full || auth.username || 'AVCI';
+      }
+      if (avatarEl && auth.photo) {
+        avatarEl.innerHTML = `<img src="${auth.photo}" class="w-full h-full object-cover" />`;
+      }
+    }
+
     function showAuthScreen() {
       document.getElementById('authScreen').classList.remove('hidden');
       document.getElementById('appRoot').classList.add('hidden');
-      loadLoginProfiles();
+      // loadLoginProfiles();
       const auth = getAuth();
       const setupForm = document.getElementById('setupForm');
       const loginForm = document.getElementById('loginForm');
