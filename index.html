@@ -1167,7 +1167,10 @@
           if (data.auth && data.auth.username && data.auth.pinHash) {
             localStorage.setItem(AUTH_KEY, JSON.stringify({
               username: data.auth.username,
-              pinHash: data.auth.pinHash
+              pinHash: data.auth.pinHash,
+              firstName: data.auth.firstName || '',
+              lastName: data.auth.lastName || '',
+              photo: data.auth.photo || ''
             }));
           }
 
@@ -2038,9 +2041,8 @@
         return false;
       }
       if (username.toLowerCase() !== (auth.username || '').toLowerCase() || hashPin(pin) !== auth.pinHash) {
-        // Otomatik denemede hata gösterme; sadece butonla basınca göster
         if (e && e.type === 'submit') {
-          err.textContent = 'Kullanıcı adı veya şifre hatalı';
+          err.textContent = 'Kullanıcı adı veya şifre hatalı. Yedek dosyan varsa "Veri Yükle" ile dene.';
           err.classList.remove('hidden');
           document.getElementById('loginPin').value = '';
         }
