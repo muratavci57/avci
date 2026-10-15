@@ -745,7 +745,7 @@
           transactions: state.transactions,
           categories: state.categories,
           receivables: state.receivables,
-          debts: state.debts || []
+          debts: state.debts || [],
           updatedAt: new Date().toISOString()
         }).catch(e => console.warn('FB save error', e));
       }
