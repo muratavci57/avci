@@ -1210,6 +1210,7 @@
 
     // ========== TABS ==========
     function switchTab(tab) {
+      sessionStorage.setItem('avciLastTab', tab);
       const overview = document.getElementById('viewOverview');
       const expenses = document.getElementById('viewExpenses');
       const receivables = document.getElementById('viewReceivables');
@@ -1928,6 +1929,8 @@
       await load();
       document.getElementById('filterMonth').value = '';
       refreshAll();
+      const lastTab = sessionStorage.getItem('avciLastTab') || 'overview';
+      switchTab(lastTab);
       if (window.fbDb && currentUsername) {
         save();
         await ensureUserMeta(currentUsername);
