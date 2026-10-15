@@ -2005,6 +2005,14 @@
       showToast('Hesap oluşturuldu');
     }
 
+    function resetAuth() {
+      if (!confirm('Yerel hesap verileri silinecek. Yeni hesap oluşturabilirsin. Devam?')) return;
+      localStorage.removeItem(AUTH_KEY);
+      sessionStorage.removeItem('finansTakipSession');
+      showToast('Hesap sıfırlandı. Şimdi Kayıt Ol ile yeni hesap oluştur.', 'info');
+      setTimeout(() => location.reload(), 1200);
+    }
+
     function showRegisterForm() {
       const login = document.getElementById('loginForm');
       const setup = document.getElementById('setupForm');
