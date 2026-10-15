@@ -1254,9 +1254,23 @@
       }
     }
 
-    function openDebtModal() {
+    function openDebtModal(editId) {
       document.getElementById('debtForm').reset();
-      document.getElementById('debtDate').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('debtEditId').value = editId || '';
+      if (editId) {
+        const d = (state.debts || []).find(x => x.id === editId);
+        if (d) {
+          document.getElementById('debtCategory').value = d.category || 'Diğer';
+          document.getElementById('debtDesc').value = d.desc || '';
+          document.getElementById('debtAmount').value = d.amount || '';
+          document.getElementById('debtDate').value = d.date || '';
+          document.getElementById('debtTo').value = d.to || '';
+          document.querySelector('#modalDebt h3').textContent = 'Borcu Düzenle';
+        }
+      } else {
+        document.getElementById('debtDate').value = new Date().toISOString().slice(0, 10);
+        document.querySelector('#modalDebt h3').textContent = 'Yeni Borç';
+      }
       const modal = document.getElementById('modalDebt');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -1264,6 +1278,7 @@
 
     function saveDebt(e) {
       e.preventDefault();
+      const id = document.getElementById('debtEditId').value;
       const category = document.getElementById('debtCategory').value;
       const desc = document.getElementById('debtDesc').value.trim();
       const amount = parseFloat(document.getElementById('debtAmount').value);
@@ -1271,11 +1286,18 @@
       const to = document.getElementById('debtTo').value.trim();
       if (!desc || !amount || !date) return;
       if (!state.debts) state.debts = [];
-      state.debts.push({ id: uid(), category, desc, amount, date, to });
+
+      if (id) {
+        const idx = state.debts.findIndex(d => d.id === id);
+        if (idx !== -1) state.debts[idx] = { id, category, desc, amount, date, to };
+        showToast('Borç güncellendi');
+      } else {
+        state.debts.push({ id: uid(), category, desc, amount, date, to });
+        showToast('Borç eklendi');
+      }
       save();
       closeModal('debt');
       renderDebts();
-      showToast('Borç eklendi');
     }
 
     function deleteDebt(id) {
@@ -1306,7 +1328,8 @@
           </div>
           <div class="text-right">
             <div class="font-bold text-rose-600">${formatMoney(d.amount)}</div>
-            <button onclick="deleteDebt('${d.id}')" class="text-xs text-slate-400 hover:text-rose-600 mt-1">Sil</button>
+            <button onclick="openDebtModal('${d.id}')" class="text-xs text-indigo-600 hover:underline mr-2">Düzenle</button>
+            <button onclick="deleteDebt('${d.id}')" class="text-xs text-slate-400 hover:text-rose-600">Sil</button>
           </div>
         </div>
       `).join('');
@@ -2335,6 +2358,7 @@
         </button>
       </div>
       <form id="debtForm" onsubmit="saveDebt(event)" class="p-5 space-y-4">
+        <input type="hidden" id="debtEditId" value="" />
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Kategori</label>
           <select id="debtCategory" required class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm">
