@@ -712,10 +712,11 @@
         try {
           const snap = await window.fbDb.ref('users/' + currentUsername + '/data').once('value');
           const remote = snap.val();
-          if (remote && (remote.transactions || remote.receivables)) {
+          if (remote && (remote.transactions || remote.receivables || remote.debts)) {
             state.transactions = remote.transactions || [];
             state.categories = remote.categories || [...DEFAULT_CATEGORIES];
             state.receivables = remote.receivables || [];
+            state.debts = remote.debts || [];
             localStorage.setItem('finansTakip', JSON.stringify(state));
             return;
           }
@@ -731,6 +732,7 @@
           state.transactions = parsed.transactions || [];
           state.categories = parsed.categories || [...DEFAULT_CATEGORIES];
           state.receivables = parsed.receivables || [];
+          state.debts = parsed.debts || [];
         }
       } catch (e) {
         console.warn('Veri yüklenemedi', e);
@@ -1200,7 +1202,7 @@
 
     function confirmClear() {
       if (!confirm('Tüm işlemler, kategoriler ve alacaklar silinecek. Emin misin?')) return;
-      state = { transactions: [], categories: [...DEFAULT_CATEGORIES], receivables: [] };
+      state = { transactions: [], categories: [...DEFAULT_CATEGORIES], receivables: [], debts: [] };
       save();
       refreshAll();
       showToast('Tüm veri temizlendi', 'info');
