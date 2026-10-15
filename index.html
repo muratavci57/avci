@@ -188,7 +188,7 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
     <!-- Sekmeler -->
-    <div class="grid grid-cols-3 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <button id="tabOverview" onclick="switchTab('overview')" class="py-3.5 text-sm font-semibold rounded-2xl bg-emerald-600 text-white shadow-md transition flex items-center justify-center gap-2">
         <i class="fas fa-chart-pie"></i> Genel Bakış
       </button>
@@ -197,6 +197,9 @@
       </button>
       <button id="tabReceivables" onclick="switchTab('receivables')" class="py-3.5 text-sm font-semibold rounded-2xl bg-slate-800 text-slate-200 hover:bg-slate-700 transition flex items-center justify-center gap-2">
         <i class="fas fa-hand-holding-dollar"></i> Alacaklarım
+      </button>
+      <button id="tabDebts" onclick="switchTab('debts')" class="py-3.5 text-sm font-semibold rounded-2xl bg-slate-800 text-slate-200 hover:bg-slate-700 transition flex items-center justify-center gap-2">
+        <i class="fas fa-credit-card"></i> Borçlarım
       </button>
     </div>
 
@@ -480,6 +483,18 @@
     </div>
 
     <!-- ===== ADMIN PANELİ ===== -->
+    <!-- ===== BORÇLARIM ===== -->
+    <div id="viewDebts" class="hidden space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-900">Borçlarım</h2>
+        <button onclick="openDebtModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium rounded-xl">
+          <i class="fas fa-plus text-xs mr-1"></i> Borç Ekle
+        </button>
+      </div>
+      <div id="debtList" class="space-y-3"></div>
+      <div id="debtEmpty" class="text-center text-slate-400 py-10">Henüz borç yok</div>
+    </div>
+
     <div id="viewAdmin" class="hidden space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -677,7 +692,8 @@
     let state = {
       transactions: [],
       categories: [...DEFAULT_CATEGORIES],
-      receivables: []
+      receivables: [],
+      debts: []
     };
 
     let ratesCache = {}; // asset key -> TRY price (ask)
@@ -726,6 +742,7 @@
           transactions: state.transactions,
           categories: state.categories,
           receivables: state.receivables,
+          debts: state.debts || []
           updatedAt: new Date().toISOString()
         }).catch(e => console.warn('FB save error', e));
       }
@@ -783,7 +800,7 @@
         document.getElementById('recvAsset').value = 'xau_gram';
         document.getElementById('recvType').value = 'Borç';
       }
-      const modalMap = { transaction: 'modalTransaction', category: 'modalCategory', receivable: 'modalReceivable', profile: 'modalProfile' };
+      const modalMap = { transaction: 'modalTransaction', category: 'modalCategory', receivable: 'modalReceivable', profile: 'modalProfile', debt: 'modalDebt' };
       const modal = document.getElementById(modalMap[type] || 'modalTransaction');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -791,7 +808,7 @@
     }
 
     function closeModal(type) {
-      const modalMap = { transaction: 'modalTransaction', category: 'modalCategory', receivable: 'modalReceivable', profile: 'modalProfile' };
+      const modalMap = { transaction: 'modalTransaction', category: 'modalCategory', receivable: 'modalReceivable', profile: 'modalProfile', debt: 'modalDebt' };
       const modal = document.getElementById(modalMap[type] || 'modalTransaction');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
@@ -1188,18 +1205,20 @@
       const overview = document.getElementById('viewOverview');
       const expenses = document.getElementById('viewExpenses');
       const receivables = document.getElementById('viewReceivables');
+      const debts = document.getElementById('viewDebts');
       const admin = document.getElementById('viewAdmin');
       const btnO = document.getElementById('tabOverview');
       const btnE = document.getElementById('tabExpenses');
       const btnR = document.getElementById('tabReceivables');
-      const btnA = document.getElementById('tabAdminNav');
+      const btnD = document.getElementById('tabDebts');
 
       overview.classList.add('hidden');
       expenses.classList.add('hidden');
       receivables.classList.add('hidden');
+      if (debts) debts.classList.add('hidden');
       if (admin) admin.classList.add('hidden');
 
-      [btnO, btnE, btnR].forEach(b => {
+      [btnO, btnE, btnR, btnD].forEach(b => {
         if (b) b.className = 'py-3.5 text-sm font-semibold rounded-2xl bg-slate-800 text-slate-200 hover:bg-slate-700 transition flex items-center justify-center gap-2';
       });
 
@@ -1216,10 +1235,72 @@
         if (btnR) btnR.className = 'py-3.5 text-sm font-semibold rounded-2xl bg-amber-600 text-white shadow-md transition flex items-center justify-center gap-2';
         renderReceivables();
         refreshRates();
+      } else if (tab === 'debts' && debts) {
+        debts.classList.remove('hidden');
+        if (btnD) btnD.className = 'py-3.5 text-sm font-semibold rounded-2xl bg-rose-700 text-white shadow-md transition flex items-center justify-center gap-2';
+        renderDebts();
       } else if (tab === 'admin' && admin) {
         admin.classList.remove('hidden');
         loadAdminData();
       }
+    }
+
+    function openDebtModal() {
+      document.getElementById('debtForm').reset();
+      document.getElementById('debtDate').value = new Date().toISOString().slice(0, 10);
+      const modal = document.getElementById('modalDebt');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function saveDebt(e) {
+      e.preventDefault();
+      const category = document.getElementById('debtCategory').value;
+      const desc = document.getElementById('debtDesc').value.trim();
+      const amount = parseFloat(document.getElementById('debtAmount').value);
+      const date = document.getElementById('debtDate').value;
+      const to = document.getElementById('debtTo').value.trim();
+      if (!desc || !amount || !date) return;
+      if (!state.debts) state.debts = [];
+      state.debts.push({ id: uid(), category, desc, amount, date, to });
+      save();
+      closeModal('debt');
+      renderDebts();
+      showToast('Borç eklendi');
+    }
+
+    function deleteDebt(id) {
+      if (!confirm('Bu borcu silmek istediğine emin misin?')) return;
+      state.debts = (state.debts || []).filter(d => d.id !== id);
+      save();
+      renderDebts();
+      showToast('Borç silindi');
+    }
+
+    function renderDebts() {
+      const list = document.getElementById('debtList');
+      const empty = document.getElementById('debtEmpty');
+      if (!list) return;
+      const items = [...(state.debts || [])].sort((a, b) => a.date.localeCompare(b.date));
+      if (items.length === 0) {
+        list.innerHTML = '';
+        if (empty) empty.classList.remove('hidden');
+        return;
+      }
+      if (empty) empty.classList.add('hidden');
+      list.innerHTML = items.map(d => `
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-medium text-rose-500 uppercase">${d.category || 'Diğer'}</div>
+            <div class="font-semibold text-slate-900">${d.desc}</div>
+            <div class="text-sm text-slate-500">${d.to || '—'} • ${formatDate(d.date)}</div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold text-rose-600">${formatMoney(d.amount)}</div>
+            <button onclick="deleteDebt('${d.id}')" class="text-xs text-slate-400 hover:text-rose-600 mt-1">Sil</button>
+          </div>
+        </div>
+      `).join('');
     }
 
     // ========== HARCAMALARIM ==========
@@ -2219,6 +2300,57 @@
 
         <button onclick="saveProfile()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl">Kaydet</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Borç Ekle -->
+  <div id="modalDebt" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md fade-in">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <h3 class="text-lg font-semibold text-slate-900">Yeni Borç</h3>
+        <button onclick="closeModal('debt')" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form id="debtForm" onsubmit="saveDebt(event)" class="p-5 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kategori</label>
+          <select id="debtCategory" required class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm">
+            <option value="Nakit alınan para">Nakit alınan para</option>
+            <option value="Araç bakım borcu">Araç bakım borcu</option>
+            <option value="Kredi kartı">Kredi kartı</option>
+            <option value="Kredi / Banka">Kredi / Banka</option>
+            <option value="Kira borcu">Kira borcu</option>
+            <option value="Fatura borcu">Fatura borcu</option>
+            <option value="Kişisel borç">Kişisel borç</option>
+            <option value="Diğer">Diğer</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Açıklama</label>
+          <input type="text" id="debtDesc" required placeholder="Örn: Kredi kartı, kira borcu..."
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Tutar (TL)</label>
+          <input type="number" id="debtAmount" step="0.01" min="0.01" required placeholder="0,00"
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Vade tarihi</label>
+          <input type="date" id="debtDate" required
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kime</label>
+          <input type="text" id="debtTo" placeholder="Banka, kişi adı..."
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeModal('debt')" class="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-xl">İptal</button>
+          <button type="submit" class="flex-1 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium rounded-xl">Kaydet</button>
+        </div>
+      </form>
     </div>
   </div>
 
