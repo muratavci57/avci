@@ -2037,7 +2037,7 @@
         err.classList.remove('hidden');
         return false;
       }
-      if (username !== auth.username || hashPin(pin) !== auth.pinHash) {
+      if (username.toLowerCase() !== (auth.username || '').toLowerCase() || hashPin(pin) !== auth.pinHash) {
         // Otomatik denemede hata gösterme; sadece butonla basınca göster
         if (e && e.type === 'submit') {
           err.textContent = 'Kullanıcı adı veya şifre hatalı';
@@ -2078,7 +2078,7 @@
       const pin = document.getElementById('loginPin').value;
       // Kayıtlı şifre uzunluğuna ulaşınca dene (4–8 hane)
       if (!username || !pin || pin.length < 4) return;
-      if (username === auth.username && hashPin(pin) === auth.pinHash) {
+      if (username.toLowerCase() === (auth.username || "").toLowerCase() && hashPin(pin) === auth.pinHash) {
         document.getElementById('loginError').classList.add('hidden');
         sessionStorage.setItem('finansTakipSession', '1');
         const box = document.querySelector('#authScreen > div');
