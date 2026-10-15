@@ -2009,20 +2009,16 @@
     }
 
     function resetAuth() {
-      if (!confirm('Yerel hesap verileri silinecek. Yeni hesap oluşturabilirsin. Devam?')) return;
-      localStorage.removeItem(AUTH_KEY);
-      sessionStorage.removeItem('finansTakipSession');
-      showToast('Hesap sıfırlandı. Şimdi Kayıt Ol ile yeni hesap oluştur.', 'info');
-      setTimeout(() => location.reload(), 1200);
-    }
-
-    function resetAuth() {
       if (!confirm('Hesap verileri silinecek ve yeni hesap oluşturabileceksin. Devam etmek istiyor musun?')) return;
       localStorage.removeItem('finansTakipAuth');
       sessionStorage.removeItem('finansTakipSession');
-      showToast('Hesap sıfırlandı. Şimdi Kayıt Ol ile yeni hesap oluştur.', 'info');
-      setTimeout(() => location.reload(), 1000);
+      alert('Hesap sıfırlandı. Şimdi Kayıt Ol ile yeni hesap oluştur.');
+      location.reload();
     }
+
+    window.resetAuth = resetAuth;
+    window.showRegisterForm = showRegisterForm;
+    window.showLoginForm = showLoginForm;
 
     function showRegisterForm() {
       const login = document.getElementById('loginForm');
